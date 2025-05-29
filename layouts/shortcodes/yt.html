@@ -1,11 +1,37 @@
 <style>
-.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; }
-.embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .embed-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+  }
+  .embed-container iframe,
+  .embed-container object,
+  .embed-container embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .privacy-notice {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 0.5em;
+  }
 </style>
-<div class='embed-container{{ if $.Site.Params.youtube_video_class }} {{ $.Site.Params.youtube_video_class }}{{ end }}'>
-  <p class="privacy-notice">
-    By playing this video, data will be transmitted to YouTube.
-    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Mehr erfahren</a>.
-  </p>
-  <iframe src='https://www.youtube-nocookie.com/embed/{{ .Get 0 }}' frameborder='0' allowfullscreen></iframe>
+
+<div class="embed-container{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}">
+  {{ if .Site.Params.show_privacy_notice }}
+    <p class="privacy-notice">
+      {{ with .Site.Params.privacy_notice_text }}
+        {{ . }}
+      {{ else }}
+        By playing this video, data will be transmitted to YouTube.
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Learn more</a>.
+      {{ end }}
+    </p>
+  {{ end }}
+  <iframe src="https://www.youtube-nocookie.com/embed/{{ .Get 0 }}" frameborder="0" allowfullscreen></iframe>
 </div>
