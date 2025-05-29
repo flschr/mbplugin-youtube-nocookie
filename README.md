@@ -4,10 +4,7 @@
 
 This **Micro.blog plugin** renders a thumbnail preview with an overlay and only loads the actual YouTube iframe once the user clicks. Once the user clicked on the thumbnail, the video is loaded in the **privacy-enhanced mode** (`www.youtube-nocookie.com`). This helps reduce tracking and aligns better with privacy regulations like GDPR.
 
-This plugin is a fork of [mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube) and builds upon:
-
-- Steve Layton’s [Bandcamp Micro.blog plugin](https://github.com/shindakun/mbplugin-bandcamp)
-- Techniques from [embedresponsively.com](http://embedresponsively.com)
+This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube).
 
 ---
 
