@@ -3,8 +3,36 @@
   position: relative;
   padding-bottom: 56.25%;
   height: 0;
-  overflow: hidden;
   max-width: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.video-thumbnail {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1em;
+  font-size: 0.95em;
+  cursor: pointer;
 }
 
 .video-wrapper iframe {
@@ -14,37 +42,35 @@
   width: 100%;
   height: 100%;
   border: none;
-}
-
-.privacy-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 1em;
-  font-size: 0.95em;
-  z-index: 10;
-  pointer-events: none;
+  z-index: 3;
 }
 </style>
 
-<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}">
+<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}" data-video-id="{{ .Get 0 }}">
+  <img class="video-thumbnail" src="https://img.youtube.com/vi/{{ .Get 0 }}/hqdefault.jpg" alt="YouTube Thumbnail">
   {{ if .Site.Params.show_privacy_notice }}
-    <div class="privacy-overlay">
+    <div class="video-overlay">
       {{ with .Site.Params.privacy_notice_text }}
         {{ . }}
       {{ else }}
-        By playing this video, data will be transmitted to YouTube.
-        <a href="https://policies.google.com/privacy" style="color: #fff; text-decoration: underline;" target="_blank" rel="noopener">Learn more</a>.
+        By clicking, a connection to YouTube will be established and data may be transferred.
       {{ end }}
     </div>
   {{ end }}
-  <iframe src="https://www.youtube-nocookie.com/embed/{{ .Get 0 }}" allowfullscreen></iframe>
 </div>
+
+<script>
+document.querySelectorAll('.video-wrapper').forEach(wrapper => {
+  const videoId = wrapper.dataset.videoId
+  const overlay = wrapper.querySelector('.video-overlay')
+  const thumbnail = wrapper.querySelector('.video-thumbnail')
+
+  function loadVideo() {
+    wrapper.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`;
+  }
+
+  wrapper.addEventListener('click', loadVideo)
+  overlay?.addEventListener('click', loadVideo)
+  thumbnail?.addEventListener('click', loadVideo)
+})
+</script>
