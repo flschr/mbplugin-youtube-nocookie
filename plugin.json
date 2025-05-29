@@ -1,29 +1,22 @@
 {
+  "version": "1.1.0",
   "title": "YouTube Nocookie Embed",
-  "name": "mbplugin-youtube-nocookie",
-  "version": "1.0.2",
-  "author": "René Fischer",
-  "description": "Embeds YouTube videos using the privacy-enhanced mode (youtube-nocookie.com)",
-  "settings": [
+  "description": "Embeds YouTube videos using youtube-nocookie.com with optional privacy notice.",
+  "fields": [
     {
-      "name": "youtube_video_class",
-      "type": "text",
-      "title": "Custom CSS Class",
-      "description": "Custom CSS class name (OPTIONAL)",
-      "placeholder": "e.g. responsive-video"
+      "field": "params.youtube_video_class",
+      "label": "Custom CSS Class",
+      "type": "string"
     },
     {
-      "name": "show_privacy_notice",
-      "type": "boolean",
-      "title": "Show privacy notice",
-      "description": "If enabled, a short message about data transmission to YouTube will be shown before the video."
+      "field": "params.show_privacy_notice",
+      "label": "Show privacy notice",
+      "type": "boolean"
     },
     {
-      "name": "privacy_notice_text",
-      "type": "text",
-      "title": "Privacy notice text",
-      "description": "Customize the privacy message that is shown above the embedded video.",
-      "placeholder": "By playing this video, data will be transmitted to YouTube. Learn more."
+      "field": "params.privacy_notice_text",
+      "label": "Privacy notice text",
+      "type": "string"
     }
   ]
 }
