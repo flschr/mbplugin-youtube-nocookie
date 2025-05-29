@@ -1,7 +1,6 @@
 # mbplugin-youtube-nocookie
 
-A **Micro.blog plugin** for embedding YouTube videos using the **privacy-enhanced mode** (`www.youtube-nocookie.com`).  
-This helps reduce tracking and aligns better with privacy regulations like GDPR.
+This **Micro.blog plugin** renders a thumbnail preview with an overlay and only loads the actual YouTube iframe once the user clicks. Once the user clicked on the thumbnail, the video is loaded in the **privacy-enhanced mode** (`www.youtube-nocookie.com`). This helps reduce tracking and aligns better with privacy regulations like GDPR.
 
 This plugin is a fork of [mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube) and builds upon:
 
@@ -12,9 +11,12 @@ This plugin is a fork of [mbplugin-youtube](https://github.com/fmaida/mbplugin-y
 
 ## ✅ Features
 - Embeds YouTube videos using `youtube-nocookie.com`
-- No JavaScript required
+- Videos are **not loaded automatically** (click-to-play behavior)
+- Uses **YouTube thumbnail preview**
+- Includes a **custom CSS-based YouTube-style play button**
+- Optional **privacy notice as overlay** (enabled by default)
 - Fully responsive design
-- Optional privacy notice above the embedded video
+- No external JavaScript required
 
 ---
 
@@ -37,9 +39,9 @@ This will embed the YouTube video in privacy-enhanced mode.
 ## ⚙️ Plugin Settings
 
 This plugin offers the following optional settings:
-- Custom CSS Class – Adds a custom class to the video container for styling.
-- Privacy notice on/off – Decide whether you want to show short privacy disclaimer
-- Privacy notice text – Allows you to customize the disclaimer text (defaults to a YouTube privacy message).
+- Custom CSS Class – Adds a custom class to the video container for styling
+- Privacy notice on/off – Decide whether you want to show the privacy disclaimer
+- Privacy notice text – Allows you to customize the disclaimer text 
 
 All settings can be configured in the Micro.blog plugin settings panel.
 
