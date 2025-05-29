@@ -69,31 +69,37 @@
 </style>
 
 <div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}" data-video-id="{{ .Get 0 }}">
-  <img class="video-thumbnail" src="https://img.youtube.com/vi/{{ .Get 0 }}/maxresdefault.jpg" alt="YouTube Thumbnail">
+  <img
+    class="video-thumbnail"
+    src="https://img.youtube.com/vi/{{ .Get 0 }}/maxresdefault.jpg"
+    onerror="this.onerror=null; this.src='https://img.youtube.com/vi/{{ .Get 0 }}/0.jpg';"
+    alt="YouTube Thumbnail">
+    
   {{ if .Site.Params.show_privacy_notice }}
     <div class="video-overlay">
       {{ with .Site.Params.privacy_notice_text }}
         {{ . }}
       {{ else }}
-        By clicking, a connection to YouTube will be established and data may be transferred.
+        Click to load video from YouTube. Personal data may be transferred.
       {{ end }}
     </div>
   {{ end }}
+
   <div class="video-play-button"></div>
 </div>
 
 <script>
 document.querySelectorAll('.video-wrapper').forEach(wrapper => {
-  const videoId = wrapper.dataset.videoId
-  const overlay = wrapper.querySelector('.video-overlay')
-  const thumbnail = wrapper.querySelector('.video-thumbnail')
+  const videoId = wrapper.dataset.videoId;
+  const overlay = wrapper.querySelector('.video-overlay');
+  const thumbnail = wrapper.querySelector('.video-thumbnail');
 
   function loadVideo() {
-    wrapper.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`;
+    wrapper.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1" allowfullscreen></iframe>`;
   }
 
-  wrapper.addEventListener('click', loadVideo)
-  overlay?.addEventListener('click', loadVideo)
-  thumbnail?.addEventListener('click', loadVideo)
-})
+  wrapper.addEventListener('click', loadVideo);
+  overlay?.addEventListener('click', loadVideo);
+  thumbnail?.addEventListener('click', loadVideo);
+});
 </script>
