@@ -25,10 +25,10 @@ Go to the **Micro.blog plugin directory** and click install.
 
 ## 📝 Usage
 Use the shortcode in your blog posts as follows:
-{{< yt “YOUTUBE_VIDEO_ID” >}}
+{{< yt "YOUTUBE_VIDEO_ID" >}}
 
 **Example:**
-{{< yt “7UOrJTsYyls” >}}
+{{< yt "7UOrJTsYyls" >}}
 
 This will embed the YouTube video in privacy-enhanced mode.
 
