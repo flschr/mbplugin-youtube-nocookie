@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.1.2",
   "title": "YouTube Nocookie Embed (Lazy)",
   "description": "Embeds YouTube videos using youtube-nocookie.com with a privacy-friendly click-to-play overlay.",
   "fields": [
