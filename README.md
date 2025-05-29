@@ -1,6 +1,6 @@
 # mbplugin-youtube-nocookie
 
-![YouTube Nocookie Plugin Logo](yt-nocookie-logo.png)
+<img src="yt-nocookie-logo.png" alt="YouTube Nocookie Plugin Logo" width="200">
 
 This **Micro.blog plugin** renders a thumbnail preview with an overlay and only loads the actual YouTube iframe once the user clicks. Once the user clicked on the thumbnail, the video is loaded in the **privacy-enhanced mode** (`www.youtube-nocookie.com`). This helps reduce tracking and aligns better with privacy regulations like GDPR.
 
