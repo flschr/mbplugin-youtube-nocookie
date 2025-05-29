@@ -1,12 +1,28 @@
 {
-    "version": "1.0.5",
-    "title": "YouTube Embed Shortcode Plugin",
-    "description": "This plugin introduces a YouTube shortcode to your micro.blog, enabling you to showcase your YouTube videos using an embedded player. By employing the format {{< yt VIDEO_ID >}}, you can seamlessly incorporate an embedded YouTube Player into your blog posts. The development of this functionality is rooted in the works of Steve Layton, as seen at https://github.com/shindakun/mbplugin-bandcamp/",    
-    "fields": [
-      {
-        "field": "params.youtube_video_class",
-        "label": "Custom CSS Class",
-        "placeholder": "Custom CSS class name (OPTIONAL)"
-      }
-    ]
-  }
+  "name": "mbplugin-youtube-nocookie",
+  "version": "1.0.0",
+  "author": "René Fischer",
+  "description": "Embeds YouTube videos using the privacy-enhanced mode (youtube-nocookie.com)",
+  "settings": [
+    {
+      "name": "youtube_video_class",
+      "type": "text",
+      "title": "Custom CSS Class",
+      "description": "Custom CSS class name (OPTIONAL)",
+      "placeholder": "e.g. responsive-video"
+    },
+    {
+      "name": "show_privacy_notice",
+      "type": "boolean",
+      "title": "Show privacy notice",
+      "description": "If enabled, a short message about data transmission to YouTube will be shown before the video."
+    },
+    {
+      "name": "privacy_notice_text",
+      "type": "text",
+      "title": "Privacy notice text",
+      "description": "Customize the privacy message that is shown above the embedded video.",
+      "placeholder": "By playing this video, data will be transmitted to YouTube. Learn more."
+    }
+  ]
+}
