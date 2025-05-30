@@ -11,7 +11,7 @@
     {
       "field": "params.show_privacy_notice",
       "label": "Show privacy notice",
-      "type": "boolean"
+      "type": "boolean",
       "default": true
     },
     {
