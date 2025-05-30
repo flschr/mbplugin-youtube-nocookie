@@ -1,4 +1,4 @@
-# mbplugin-youtube-nocookie
+# Privacy friendly Youtube embedds for Micro.blog
 
 <img src="yt-nocookie-logo.png" alt="YouTube Nocookie Plugin Logo" width="200">
 
