@@ -11,7 +11,7 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 ## ✅ Features
 - Embeds YouTube videos using `youtube-nocookie.com`
 - Videos are **not loaded automatically** (click-to-play behavior)
-- Uses **YouTube thumbnail preview**
+- Uses **YouTube hq thumbnail preview** (with fallback to /0.jpg if no hq is available)
 - Includes a **custom CSS-based YouTube-style play button**
 - Optional and customizable **privacy notice as overlay**
 - Fully responsive design
