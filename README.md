@@ -13,14 +13,14 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 - Videos are **not loaded automatically** (click-to-play behavior)
 - Uses **YouTube thumbnail preview**
 - Includes a **custom CSS-based YouTube-style play button**
-- Optional **privacy notice as overlay** (enabled by default)
+- Optional and customizable **privacy notice as overlay**
 - Fully responsive design
 - No external JavaScript required
 
 ---
 
 ## 📦 Installation
-Go to the **Micro.blog plugin directory** and click install.
+Go to the **Micro.blog plugin directory** and install the plugin from there.
 
 ---
 
