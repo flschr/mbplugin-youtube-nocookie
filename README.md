@@ -6,8 +6,6 @@ This **Micro.blog plugin** renders a thumbnail preview with an overlay and only 
 
 This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube).
 
----
-
 ## ✅ Features
 - Embeds YouTube videos using `youtube-nocookie.com`
 - Videos are **not loaded automatically** (click-to-play behavior)
@@ -17,12 +15,8 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 - Fully responsive design
 - No external JavaScript required
 
----
-
 ## 📦 Installation
 Go to the **Micro.blog plugin directory** and install the plugin from there.
-
----
 
 ## 📝 Usage
 Use the shortcode in your blog posts as follows:
@@ -33,8 +27,6 @@ Use the shortcode in your blog posts as follows:
 
 This will embed the YouTube video in privacy-enhanced mode.
 
----
-
 ## ⚙️ Plugin Settings
 
 This plugin offers the following optional settings:
@@ -43,8 +35,6 @@ This plugin offers the following optional settings:
 - Privacy notice text – Allows you to customize the disclaimer text 
 
 All settings can be configured in the Micro.blog plugin settings panel.
-
----
 
 ## 🙏 Credits
 
