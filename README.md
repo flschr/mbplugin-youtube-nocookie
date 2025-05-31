@@ -2,7 +2,7 @@
 
 <img src="yt-nocookie-logo.png" alt="YouTube Nocookie Plugin Logo" width="200">
 
-This **Micro.blog plugin** renders a thumbnail preview with an overlay and only loads the actual YouTube iframe once the user clicks. Once the user clicked on the thumbnail, the video is loaded in the **privacy-enhanced mode** (`www.youtube-nocookie.com`). This helps reduce tracking and aligns better with privacy regulations like GDPR.
+This **Micro.blog plugin** renders a thumbnail preview with an overlay and only loads the actual YouTube iframe once the user clicks it. After the click on the thumbail, the video is loaded in the **privacy-enhanced mode** using (`www.youtube-nocookie.com`). This helps reduce tracking and aligns better with privacy regulations like GDPR.
 
 This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube).
 
@@ -19,13 +19,10 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 Go to the **Micro.blog plugin directory** and install the plugin from there.
 
 ## 📝 Usage
-Use the shortcode in your blog posts as follows:
-`{{< yt "YOUTUBE_VIDEO_ID" >}}`
+Use the shortcode in your blog posts: `{{< yt "YOUTUBE_VIDEO_ID" >}}`
+Example: `{{< yt "7UOrJTsYyls" >}}`
 
-**Example:**
-`{{< yt "7UOrJTsYyls" >}}`
-
-This will embed the YouTube video in privacy-enhanced mode.
+Example page to [see the plugin in action](https://fischr.org/2018/08/26/gardasee-again/).
 
 ## ⚙️ Plugin Settings
 
