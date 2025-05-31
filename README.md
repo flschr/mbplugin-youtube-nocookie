@@ -19,9 +19,7 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 Go to the **Micro.blog plugin directory** and install the plugin from there.
 
 ## 📝 Usage
-Use the shortcode in your blog posts: `{{< yt "YOUTUBE_VIDEO_ID" >}}`
-Example: `{{< yt "7UOrJTsYyls" >}}`
-
+Use the shortcode in your blog posts: `{{< yt "YOUTUBE_VIDEO_ID" >}}`, for example: `{{< yt "7UOrJTsYyls" >}}`.
 Example page to [see the plugin in action](https://fischr.org/2018/08/26/gardasee-again/).
 
 ## ⚙️ Plugin Settings
