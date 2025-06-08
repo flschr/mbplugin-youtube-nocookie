@@ -75,7 +75,7 @@
     onerror="this.onerror=null; this.src='https://img.youtube.com/vi/{{ .Get 0 }}/0.jpg';"
     alt="YouTube Thumbnail">
     
-  {{ if .Site.Params.show_privacy_notice }}
+  {{ if eq .Site.Params.show_privacy_notice true }}
     <div class="video-overlay">
       {{ with .Site.Params.youtube_privacy_notice_text }}
         {{ . }}
