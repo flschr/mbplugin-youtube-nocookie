@@ -1,0 +1,21 @@
+{
+  "name": "mbplugin-youtube-nocookie",
+  "version": "1.0.0",
+  "description": "<img src=\"yt-nocookie-logo.png\" alt=\"YouTube Nocookie Plugin Logo\" width=\"200\">",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^30.0.4",
+    "jest-environment-jsdom": "^30.0.4",
+    "jsdom": "^26.1.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
+  }
+}

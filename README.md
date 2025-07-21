@@ -31,6 +31,22 @@ This plugin offers the following optional settings:
 
 All settings can be configured in the Micro.blog plugin settings panel.
 
+## 🧪 Testing
+
+This repository includes a small Jest test suite.
+
+Install dependencies once with:
+
+```bash
+npm install
+```
+
+Then run the tests using:
+
+```bash
+npm test
+```
+
 ## 🙏 Credits
 
 - [fmaida/mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube)

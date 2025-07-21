@@ -34,4 +34,9 @@ Temporary Items
 # iCloud generated files
 *.icloud
 
+# Node
+node_modules/
+coverage/
+
+
 # End of https://www.toptal.com/developers/gitignore/api/macos
