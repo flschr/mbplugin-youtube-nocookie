@@ -90,6 +90,11 @@
 
 <script>
 document.querySelectorAll('.video-wrapper').forEach(wrapper => {
+  if (wrapper.dataset.listenersAdded === 'true') {
+    return;
+  }
+  wrapper.dataset.listenersAdded = 'true';
+
   const videoId = wrapper.dataset.videoId;
   const overlay = wrapper.querySelector('.video-overlay');
   const thumbnail = wrapper.querySelector('.video-thumbnail');
