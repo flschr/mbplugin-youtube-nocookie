@@ -27,7 +27,8 @@ Example page to [see the plugin in action](https://fischr.org/2018/08/26/gardase
 This plugin offers the following optional settings:
 - Custom CSS Class – Adds a custom class to the video container for styling
 - Privacy notice on/off – Decide whether you want to show the privacy disclaimer
-- Privacy notice text – Allows you to customize the disclaimer text 
+- Privacy notice text – Allows you to customize the disclaimer text
+- Rounded thumbnail corners – Display video previews with rounded edges
 
 All settings can be configured in the Micro.blog plugin settings panel.
 
@@ -36,3 +37,8 @@ All settings can be configured in the Micro.blog plugin settings panel.
 - [fmaida/mbplugin-youtube](https://github.com/fmaida/mbplugin-youtube)
 - [shindakun/mbplugin-bandcamp](https://github.com/shindakun/mbplugin-bandcamp)
 - [embedresponsively.com](http://embedresponsively.com)
+
+## Changelog
+
+### 1.3.0
+- Added option to enable rounded corners for video thumbnails

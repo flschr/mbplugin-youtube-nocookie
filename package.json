@@ -1,6 +1,6 @@
 {
   "name": "mbplugin-youtube-nocookie",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "<img src=\"yt-nocookie-logo.png\" alt=\"YouTube Nocookie Plugin Logo\" width=\"200\">",
   "main": "index.js",
   "scripts": {

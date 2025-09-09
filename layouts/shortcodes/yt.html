@@ -8,6 +8,10 @@
   background-color: #000;
 }
 
+.video-wrapper.rounded-corners {
+  border-radius: 10px;
+}
+
 .video-thumbnail {
   position: absolute;
   width: 100%;
@@ -30,6 +34,10 @@
   padding: 0.5em 1em;
   z-index: 2;
   pointer-events: none;
+}
+
+.video-wrapper.rounded-corners .video-overlay {
+  border-radius: 0 0 10px 10px;
 }
 
 .video-play-button {
@@ -68,7 +76,7 @@
 }
 </style>
 
-<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}" data-video-id="{{ .Get 0 }}">
+<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}" data-video-id="{{ .Get 0 }}">
   <img
     class="video-thumbnail"
     src="https://img.youtube.com/vi/{{ .Get 0 }}/maxresdefault.jpg"
