@@ -8,6 +8,7 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 
 ## ✅ Features
 - Embeds YouTube videos using `youtube-nocookie.com`
+- Supports embedding full YouTube URLs and playlists (auto-detection)
 - Videos are **not loaded automatically** (click-to-play behavior)
 - Uses **YouTube hq thumbnail preview** (with fallback to /0.jpg if no hq is available)
 - Includes a **custom CSS-based YouTube-style play button**
@@ -19,7 +20,16 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 Go to the **Micro.blog plugin directory** and install the plugin from there.
 
 ## 📝 Usage
-Use the shortcode in your blog posts: `{{< yt "YOUTUBE_VIDEO_ID" >}}`, for example: `{{< yt "7UOrJTsYyls" >}}`.
+Use the shortcode in your blog posts to embed YouTube videos or playlists. The shortcode automatically detects whether you’ve entered a single video, a playlist, or a full YouTube URL.
+
+Examples:
+- Video by ID: `{{< yt "7UOrJTsYyls" >}}`
+- Video by full URL: `{{< yt "https://www.youtube.com/watch?v=7UOrJTsYyls" >}}`
+- Playlist by ID: `{{< yt "OLAK5uy_kdjEovCQlPXN09ictIKnHL-W4kJh0raQM" >}}`
+- Playlist by URL: `{{< yt "https://www.youtube.com/playlist?list=OLAK5uy_kdjEovCQlPXN09ictIKnHL-W4kJh0raQM" >}}`
+- Playlist with custom thumbnail: `{{< yt "OLAK5uy_kdjEovCQlPXN09ictIKnHL-W4kJh0raQM" "https://example.com/thumb.jpg" >}}`
+
+All embeds use YouTube’s privacy-enhanced domain (`youtube-nocookie.com`).
 Example page to [see the plugin in action](https://fischr.org/2018/08/26/gardasee-again/).
 
 ## ⚙️ Plugin Settings
