@@ -50,5 +50,9 @@ All settings can be configured in the Micro.blog plugin settings panel.
 
 ## Changelog
 
+### 1.3.1
+- Added support for Playlists and YouTube URLs
+- Added option to use a custom thumbnail
+
 ### 1.3.0
 - Added option to enable rounded corners for video thumbnails
