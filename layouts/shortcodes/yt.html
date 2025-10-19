@@ -1,3 +1,13 @@
+{{- $includeAssets := true -}}
+{{- with .Page -}}
+  {{- if .Scratch.Get "yt-nocookie-assets" -}}
+    {{- $includeAssets = false -}}
+  {{- else -}}
+    {{- .Scratch.Set "yt-nocookie-assets" true -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if $includeAssets }}
 <style>
 .video-wrapper {
   position: relative;
@@ -6,6 +16,17 @@
   max-width: 100%;
   overflow: hidden;
   background-color: #000;
+  cursor: pointer;
+  outline: none;
+}
+
+.video-wrapper[data-is-loaded="true"] {
+  cursor: auto;
+}
+
+.video-wrapper:focus-visible {
+  outline: 3px solid #e53935;
+  outline-offset: 4px;
 }
 
 .video-wrapper.rounded-corners {
@@ -18,7 +39,6 @@
   height: 100%;
   object-fit: contain;
   background-color: #000;
-  cursor: pointer;
   z-index: 1;
 }
 
@@ -76,25 +96,6 @@
 }
 </style>
 
-<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}" data-video-id="{{ .Get 0 }}" data-thumb="{{ with .Get 1 }}{{ . }}{{ end }}">
-  <img
-    class="video-thumbnail"
-    src="data:image/svg+xml;charset=utf-8,{{ printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") }}"
-    alt="YouTube Thumbnail">
-    
-  {{ if and (eq .Site.Params.show_privacy_notice true) (or .Site.Params.youtube_privacy_notice_text "") }}
-    <div class="video-overlay">
-      {{ with .Site.Params.youtube_privacy_notice_text }}
-        {{ . }}
-      {{ else }}
-        Click to load video from YouTube. Personal data may be transferred.
-      {{ end }}
-    </div>
-  {{ end }}
-
-  <div class="video-play-button"></div>
-</div>
-
 <script>
 (function(){
   function parseId(raw) {
@@ -127,59 +128,118 @@
     return { type: 'unknown' };
   }
 
-  document.querySelectorAll('.video-wrapper').forEach(wrapper => {
-    if (wrapper.dataset.listenersAdded === 'true') return;
-    wrapper.dataset.listenersAdded = 'true';
+  function enhanceEmbeds() {
+    document.querySelectorAll('.video-wrapper').forEach(wrapper => {
+      if (wrapper.dataset.listenersAdded === 'true') return;
+      wrapper.dataset.listenersAdded = 'true';
 
-    let raw = wrapper.dataset.videoId || '';
-    if (raw.length > 2048) { console.warn('video id too long, treating as unknown'); raw=''; }
+      let raw = wrapper.dataset.videoId || '';
+      if (raw.length > 2048) { console.warn('video id too long, treating as unknown'); raw=''; }
 
-    const customThumb = wrapper.dataset.thumb || '';
-    const safeThumb = /^https?:\/\//i.test(customThumb) ? customThumb : '';
+      const customThumb = wrapper.dataset.thumb || '';
+      const safeThumb = /^https?:\/\//i.test(customThumb) ? customThumb : '';
+      const providedTitle = wrapper.dataset.videoTitle || '';
 
-    const kind = parseId(raw);
-    const overlay = wrapper.querySelector('.video-overlay');
-    const thumbnail = wrapper.querySelector('.video-thumbnail');
+      const kind = parseId(raw);
+      const overlay = wrapper.querySelector('.video-overlay');
+      const thumbnail = wrapper.querySelector('.video-thumbnail');
 
-    // Thumbnails
-    if (kind.type === 'playlist') {
-      if (safeThumb) {
-        thumbnail.src = safeThumb;
-      } else {
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'>`+
-                    `<rect width='100%' height='100%' fill='#000'/>`+
-                    `<rect x='220' y='260' width='840' height='60' fill='#fff'/>`+
-                    `<rect x='220' y='340' width='660' height='60' fill='#fff'/>`+
-                    `</svg>`;
-        thumbnail.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-      }
-    } else if (kind.type === 'video') {
-      thumbnail.src = `https://img.youtube.com/vi/${kind.id}/maxresdefault.jpg`;
-      thumbnail.onerror = () => { thumbnail.onerror = null; thumbnail.src = `https://img.youtube.com/vi/${kind.id}/0.jpg`; };
-    } // unknown keeps the neutral placeholder
-
-    function loadEmbed() {
-      let src = '';
+      // Thumbnails
       if (kind.type === 'playlist') {
-        src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(kind.id)}&autoplay=1&mute=1`;
+        if (safeThumb) {
+          thumbnail.src = safeThumb;
+        } else {
+          const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'>`+
+                      `<rect width='100%' height='100%' fill='#000'/>`+
+                      `<rect x='220' y='260' width='840' height='60' fill='#fff'/>`+
+                      `<rect x='220' y='340' width='660' height='60' fill='#fff'/>`+
+                      `</svg>`;
+          thumbnail.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
       } else if (kind.type === 'video') {
-        src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(kind.id)}?autoplay=1&mute=1`;
-      } else {
-        src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(raw)}?autoplay=1&mute=1`;
-      }
-      const iframe = document.createElement('iframe');
-      iframe.setAttribute('allowfullscreen','');
-      iframe.setAttribute('loading','lazy');
-      iframe.src = src;
-      // clear and insert
-      while (wrapper.firstChild) wrapper.removeChild(wrapper.firstChild);
-      wrapper.appendChild(iframe);
-    }
+        thumbnail.src = `https://img.youtube.com/vi/${kind.id}/maxresdefault.jpg`;
+        thumbnail.onerror = () => { thumbnail.onerror = null; thumbnail.src = `https://img.youtube.com/vi/${kind.id}/0.jpg`; };
+      } // unknown keeps the neutral placeholder
 
-    // click anywhere inside wrapper
-    wrapper.addEventListener('click', loadEmbed);
-    if (overlay) overlay.addEventListener('click', loadEmbed);
-    if (thumbnail) thumbnail.addEventListener('click', loadEmbed);
-  });
+      function loadEmbed() {
+        if (wrapper.dataset.isLoaded === 'true') return;
+        let src = '';
+        if (kind.type === 'playlist') {
+          src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(kind.id)}&autoplay=1&mute=1`;
+        } else if (kind.type === 'video') {
+          src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(kind.id)}?autoplay=1&mute=1`;
+        } else {
+          src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(raw)}?autoplay=1&mute=1`;
+        }
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('allowfullscreen','');
+        iframe.setAttribute('loading','lazy');
+        iframe.setAttribute('title', providedTitle ? `YouTube video player: ${providedTitle}` : 'YouTube video player');
+        iframe.src = src;
+        // clear and insert
+        wrapper.innerHTML = '';
+        wrapper.appendChild(iframe);
+        wrapper.dataset.isLoaded = 'true';
+        wrapper.removeAttribute('role');
+        wrapper.removeAttribute('tabindex');
+        wrapper.removeAttribute('aria-label');
+      }
+
+      // click anywhere inside wrapper
+      wrapper.addEventListener('click', loadEmbed);
+      if (overlay) overlay.addEventListener('click', loadEmbed);
+      if (thumbnail) thumbnail.addEventListener('click', loadEmbed);
+
+      wrapper.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          loadEmbed();
+        }
+      });
+    });
+  }
+
+  enhanceEmbeds();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', enhanceEmbeds);
+  }
 })();
 </script>
+{{- end }}
+
+{{- $videoTitle := "" -}}
+{{- with .Get "title" -}}
+  {{- $videoTitle = . -}}
+{{- end -}}
+{{- if and (eq $videoTitle "") (ge (len .Params) 3) -}}
+  {{- $videoTitle = index .Params 2 -}}
+{{- end -}}
+{{- $ariaLabel := "Play YouTube video" -}}
+{{- if ne $videoTitle "" -}}
+  {{- $ariaLabel = printf "Play video: %s" $videoTitle -}}
+{{- end -}}
+
+<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
+  role="button"
+  tabindex="0"
+  aria-label="{{ $ariaLabel }}"
+  data-video-id="{{ .Get 0 }}"
+  data-thumb="{{ with .Get 1 }}{{ . }}{{ end }}"
+  {{ with $videoTitle }}data-video-title="{{ . }}"{{ end }}>
+  <img
+    class="video-thumbnail"
+    src="data:image/svg+xml;charset=utf-8,{{ printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") }}"
+    alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
+
+  {{ if and (eq .Site.Params.show_privacy_notice true) (or .Site.Params.youtube_privacy_notice_text "") }}
+    <div class="video-overlay">
+      {{ with .Site.Params.youtube_privacy_notice_text }}
+        {{ . }}
+      {{ else }}
+        Click to load video from YouTube. Personal data may be transferred.
+      {{ end }}
+    </div>
+  {{ end }}
+
+  <div class="video-play-button"></div>
+</div>
