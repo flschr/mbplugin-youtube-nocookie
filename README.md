@@ -50,6 +50,10 @@ All settings can be configured in the Micro.blog plugin settings panel.
 
 ## Changelog
 
+### 1.3.2
+- Improve accessibility of embeds with keyboard/focus support and iframe titles
+- Ensure shortcode assets (CSS/JS) are injected only once per page
+
 ### 1.3.1
 - Added support for Playlists and YouTube URLs
 - Added option to use a custom thumbnail
