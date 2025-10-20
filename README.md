@@ -50,6 +50,9 @@ All settings can be configured in the Micro.blog plugin settings panel.
 
 ## Changelog
 
+### 1.3.3
+- Always honor custom thumbnails for videos and playlists before falling back to YouTube defaults.
+
 ### 1.3.2
 - Improve accessibility of embeds with keyboard/focus support and iframe titles
 - Ensure shortcode assets (CSS/JS) are injected only once per page
