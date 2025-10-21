@@ -30,10 +30,12 @@ describe('YouTube shortcode behavior', () => {
   }
 
   test('keeps the provided custom thumbnail when it loads successfully', () => {
-    runScript();
-
     const thumbnail = document.querySelector('.video-thumbnail');
     expect(thumbnail).not.toBeNull();
+    expect(thumbnail.src.startsWith('data:image/svg+xml')).toBe(true);
+
+    runScript();
+
     expect(thumbnail.src).toBe('https://fischr.org/uploads/2025/bob-der-hase.webp');
 
     // simulate a successful load to ensure no fallback handlers run
@@ -43,10 +45,12 @@ describe('YouTube shortcode behavior', () => {
   });
 
   test('falls back to YouTube thumbnails when the custom image fails', () => {
-    runScript();
-
     const thumbnail = document.querySelector('.video-thumbnail');
     expect(thumbnail).not.toBeNull();
+    expect(thumbnail.src.startsWith('data:image/svg+xml')).toBe(true);
+
+    runScript();
+
     expect(thumbnail.src).toBe('https://fischr.org/uploads/2025/bob-der-hase.webp');
 
     // simulate the custom thumbnail failing to load
