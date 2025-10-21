@@ -156,7 +156,19 @@
       if (raw.length > 2048) { console.warn('video id too long, treating as unknown'); raw=''; }
 
       const customThumb = wrapper.dataset.thumb || '';
-      const safeThumb = /^https?:\/\//i.test(customThumb) ? customThumb : '';
+      const safeThumb = (() => {
+        if (!customThumb) return '';
+        if (/^data:/i.test(customThumb)) return customThumb;
+        try {
+          const parsed = new URL(customThumb, window.location.href);
+          if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href;
+          }
+        } catch (e) {
+          /* ignore */
+        }
+        return '';
+      })();
       const providedTitle = wrapper.dataset.videoTitle || '';
 
       const kind = parseId(raw);
