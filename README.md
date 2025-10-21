@@ -50,7 +50,7 @@ All settings can be configured in the Micro.blog plugin settings panel.
 
 ## Changelog
 
-### 1.3.3
+### 1.3.4
 - Always honor custom thumbnails for videos and playlists before falling back to YouTube defaults.
 
 ### 1.3.2
