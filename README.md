@@ -1,6 +1,6 @@
 # Privacy friendly YouTube embeds for Micro.blog
 
-<img src="plugin-logo.png" alt="YouTube Nocookie Plugin Logo">
+<img src="logo.png" alt="YouTube Nocookie Plugin Logo">
 
 This **Micro.blog plugin** renders a thumbnail preview with an overlay and only loads the actual YouTube iframe once the user clicks it. After the click on the thumbnail, the video is loaded in the **privacy-enhanced mode** using (`www.youtube-nocookie.com`). This helps reduce tracking and aligns better with privacy regulations like GDPR.
 
