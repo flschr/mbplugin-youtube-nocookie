@@ -11,6 +11,7 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 - Supports embedding full YouTube URLs and playlists (auto-detection)
 - Videos are **not loaded automatically** (click-to-play behavior)
 - Uses **YouTube hq thumbnail preview** (with fallback to /0.jpg if no hq is available)
+- Allows to **add a custom thumbnail** instead for a embedded video
 - Includes a **custom CSS-based YouTube-style play button**
 - Optional and customizable **privacy notice as overlay**
 - Fully responsive design
