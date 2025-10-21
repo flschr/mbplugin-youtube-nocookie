@@ -147,8 +147,22 @@
       let raw = wrapper.dataset.videoId || '';
       if (raw.length > 2048) { console.warn('video id too long, treating as unknown'); raw=''; }
 
-      const customThumb = wrapper.dataset.thumb || '';
-      const safeThumb = /^https?:\/\//i.test(customThumb) ? customThumb : '';
+      let customThumb = wrapper.dataset.thumb || '';
+      customThumb = customThumb.trim();
+      if (customThumb) {
+        const markdownMatch = customThumb.match(/^\[[^\]]*\]\(([^)]+)\)$/);
+        if (markdownMatch) {
+          customThumb = markdownMatch[1].trim();
+        }
+      }
+      let safeThumb = '';
+      if (customThumb) {
+        try {
+          safeThumb = new URL(customThumb, document.baseURI).href;
+        } catch (e) {
+          safeThumb = '';
+        }
+      }
       const providedTitle = wrapper.dataset.videoTitle || '';
 
       const kind = parseId(raw);
@@ -239,7 +253,7 @@
   tabindex="0"
   aria-label="{{ $ariaLabel }}"
   data-video-id="{{ .Get 0 }}"
-  data-thumb="{{ with .Get 1 }}{{ . }}{{ end }}"
+  data-thumb="{{ with .Get 1 }}{{- $thumb := . | plainify -}}{{- $thumb = replaceRE "(?s)^\\[[^\\]]*\\]\\(([^)]+)\\)$" "$1" $thumb -}}{{- $thumb = replaceRE "(?s).*\\(([^)]+)\\)$" "$1" $thumb -}}{{ $thumb | absURL | safeURL }}{{ end }}"
   {{ with $videoTitle }}data-video-title="{{ . }}"{{ end }}>
   <img
     class="video-thumbnail"
