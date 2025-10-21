@@ -101,25 +101,36 @@
   function parseId(raw) {
     if (!raw) return { type: 'unknown' };
     raw = raw.trim();
+    const idPattern = /^[a-zA-Z0-9_-]{11}$/;
     // Full URL handling
     try {
       if (raw.startsWith('http')) {
         const u = new URL(raw);
+        const host = u.hostname.replace(/^www\./, '');
         const list = u.searchParams.get('list');
         const v = u.searchParams.get('v');
         if (list) return { type: 'playlist', id: list };
-        if (!v && u.hostname.includes('youtu.be')) {
-          const pathId = u.pathname.replace(/^\//,'');
-          if (/^[a-zA-Z0-9_-]{11}$/.test(pathId)) return { type: 'video', id: pathId };
+        if (v && idPattern.test(v)) return { type: 'video', id: v };
+
+        const segments = u.pathname.split('/').filter(Boolean);
+        const first = segments[0] || '';
+        const second = segments[1] || '';
+        if (host === 'youtu.be' && idPattern.test(first)) {
+          return { type: 'video', id: first };
         }
-        if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return { type: 'video', id: v };
+        if (first === 'embed' && idPattern.test(second)) {
+          return { type: 'video', id: second };
+        }
+        if (first === 'shorts' && idPattern.test(second)) {
+          return { type: 'video', id: second };
+        }
       }
     } catch(e) { /* ignore */ }
 
     // Playlist-like IDs
     if (/^(PL|OL|UU|LL|FL)/i.test(raw)) return { type: 'playlist', id: raw };
     // Plain 11-char video ID
-    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return { type: 'video', id: raw };
+    if (idPattern.test(raw)) return { type: 'video', id: raw };
 
     // Fallback: extract list=...
     const m = raw.match(/list=([^&]+)/);
@@ -168,7 +179,12 @@
         } else if (kind.type === 'video') {
           src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(kind.id)}?autoplay=1&mute=1`;
         } else {
-          src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(raw)}?autoplay=1&mute=1`;
+          if (/^https?:\/\//i.test(raw)) {
+            const joiner = raw.includes('?') ? '&' : '?';
+            src = `${raw}${joiner}autoplay=1&mute=1`;
+          } else {
+            src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(raw)}?autoplay=1&mute=1`;
+          }
         }
         const iframe = document.createElement('iframe');
         iframe.setAttribute('allowfullscreen','');
