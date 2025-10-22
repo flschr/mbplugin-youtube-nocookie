@@ -381,16 +381,22 @@
   {{- end -}}
   {{- if and (eq $playlistID "") (eq $videoID "") -}}
     {{- if and (in $cleanVideo "list=") (not (hasPrefix $lowerVideo "http")) -}}
-      {{- $afterList := after "list=" $cleanVideo -}}
-      {{- $listCandidate := index (split $afterList "&") 0 -}}
-      {{- $playlistID = index (split $listCandidate "#") 0 -}}
+      {{- $listIndex := strings.Index $cleanVideo "list=" -}}
+      {{- if ge $listIndex 0 -}}
+        {{- $afterList := substr $cleanVideo (add $listIndex (len "list=")) -}}
+        {{- $listCandidate := index (split $afterList "&") 0 -}}
+        {{- $playlistID = index (split $listCandidate "#") 0 -}}
+      {{- end -}}
     {{- end -}}
     {{- if and (eq $playlistID "") (in $cleanVideo "v=") -}}
-      {{- $afterV := after "v=" $cleanVideo -}}
-      {{- $candidate := index (split $afterV "&") 0 -}}
-      {{- $candidate = index (split $candidate "#") 0 -}}
-      {{- if eq (len $candidate) 11 -}}
-        {{- $videoID = $candidate -}}
+      {{- $vIndex := strings.Index $cleanVideo "v=" -}}
+      {{- if ge $vIndex 0 -}}
+        {{- $afterV := substr $cleanVideo (add $vIndex (len "v=")) -}}
+        {{- $candidate := index (split $afterV "&") 0 -}}
+        {{- $candidate = index (split $candidate "#") 0 -}}
+        {{- if eq (len $candidate) 11 -}}
+          {{- $videoID = $candidate -}}
+        {{- end -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
