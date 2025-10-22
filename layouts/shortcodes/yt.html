@@ -11,13 +11,23 @@
 <style>
 .video-wrapper {
   position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
   padding-bottom: 56.25%;
+  margin: 0;
   height: 0;
   max-width: 100%;
   overflow: hidden;
   background-color: #000;
   cursor: pointer;
   outline: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .video-wrapper[data-is-loaded="true"] {
@@ -102,6 +112,34 @@
   border: none;
   z-index: 4;
 }
+
+.video-noscript {
+  display: block;
+  max-width: 100%;
+  background-color: #000;
+  color: inherit;
+  text-align: center;
+  padding: 0;
+  margin-top: 0.5em;
+}
+
+.video-noscript.rounded-corners {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.video-noscript img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.video-noscript a {
+  display: inline-block;
+  padding: 0.75em 1em;
+  color: inherit;
+  text-decoration: underline;
+}
 </style>
 
 <script>
@@ -110,6 +148,41 @@
     if (!raw) return { type: 'unknown' };
     raw = raw.trim();
     const idPattern = /^[a-zA-Z0-9_-]{11}$/;
+
+    function parseStartValue(value) {
+      if (!value) return 0;
+      if (/^\d+$/.test(value)) return parseInt(value, 10);
+      let total = 0;
+      let matched = false;
+      const regex = /(\d+)(h|m|s)/gi;
+      let m;
+      while ((m = regex.exec(value)) !== null) {
+        matched = true;
+        const num = parseInt(m[1], 10);
+        switch (m[2].toLowerCase()) {
+          case 'h':
+            total += num * 3600;
+            break;
+          case 'm':
+            total += num * 60;
+            break;
+          case 's':
+            total += num;
+            break;
+        }
+      }
+      return matched ? total : 0;
+    }
+
+    function extractStart(searchLike) {
+      if (!searchLike) return 0;
+      const params = new URLSearchParams(searchLike.startsWith('?') || searchLike.startsWith('#') ? searchLike.slice(1) : searchLike);
+      return parseStartValue(params.get('start')) || parseStartValue(params.get('t')) || parseStartValue(params.get('time_continue'));
+    }
+
+    let startSeconds = 0;
+    const originalRaw = raw;
+
     // Full URL handling
     try {
       if (raw.startsWith('http')) {
@@ -117,34 +190,47 @@
         const host = u.hostname.replace(/^www\./, '');
         const list = u.searchParams.get('list');
         const v = u.searchParams.get('v');
-        if (list) return { type: 'playlist', id: list };
-        if (v && idPattern.test(v)) return { type: 'video', id: v };
+        startSeconds = extractStart(u.search) || extractStart(u.hash);
+        if (list) return { type: 'playlist', id: list, start: startSeconds };
+        if (v && idPattern.test(v)) return { type: 'video', id: v, start: startSeconds };
 
         const segments = u.pathname.split('/').filter(Boolean);
         const first = segments[0] || '';
         const second = segments[1] || '';
         if (host === 'youtu.be' && idPattern.test(first)) {
-          return { type: 'video', id: first };
+          return { type: 'video', id: first, start: startSeconds || extractStart(u.search) };
         }
         if (first === 'embed' && idPattern.test(second)) {
-          return { type: 'video', id: second };
+          return { type: 'video', id: second, start: startSeconds };
         }
         if (first === 'shorts' && idPattern.test(second)) {
-          return { type: 'video', id: second };
+          return { type: 'video', id: second, start: startSeconds };
         }
       }
     } catch(e) { /* ignore */ }
 
+    let normalized = originalRaw;
+    const queryIndex = normalized.indexOf('?');
+    if (queryIndex !== -1) {
+      startSeconds = startSeconds || extractStart(normalized.slice(queryIndex + 1));
+      normalized = normalized.slice(0, queryIndex);
+    }
+    const hashIndex = normalized.indexOf('#');
+    if (hashIndex !== -1) {
+      startSeconds = startSeconds || extractStart(normalized.slice(hashIndex + 1));
+      normalized = normalized.slice(0, hashIndex);
+    }
+
     // Playlist-like IDs
-    if (/^(PL|OL|UU|LL|FL)/i.test(raw)) return { type: 'playlist', id: raw };
+    if (/^(PL|OL|UU|LL|FL)/i.test(normalized)) return { type: 'playlist', id: normalized, start: startSeconds };
     // Plain 11-char video ID
-    if (idPattern.test(raw)) return { type: 'video', id: raw };
+    if (idPattern.test(normalized)) return { type: 'video', id: normalized, start: startSeconds };
 
     // Fallback: extract list=...
-    const m = raw.match(/list=([^&]+)/);
-    if (m) return { type: 'playlist', id: m[1] };
+    const m = normalized.match(/list=([^&]+)/);
+    if (m) return { type: 'playlist', id: m[1], start: startSeconds };
 
-    return { type: 'unknown' };
+    return { type: 'unknown', start: startSeconds };
   }
 
   function enhanceEmbeds() {
@@ -200,6 +286,9 @@
           src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(kind.id)}&autoplay=1&mute=1`;
         } else if (kind.type === 'video') {
           src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(kind.id)}?autoplay=1&mute=1`;
+          if (kind.start) {
+            src += `&start=${Math.max(0, kind.start | 0)}`;
+          }
         } else {
           if (/^https?:\/\//i.test(raw)) {
             const joiner = raw.includes('?') ? '&' : '?';
@@ -214,25 +303,19 @@
         iframe.setAttribute('title', providedTitle ? `YouTube video player: ${providedTitle}` : 'YouTube video player');
         iframe.src = src;
         // clear and insert
-        wrapper.innerHTML = '';
-        wrapper.appendChild(iframe);
         wrapper.dataset.isLoaded = 'true';
-        wrapper.removeAttribute('role');
-        wrapper.removeAttribute('tabindex');
-        wrapper.removeAttribute('aria-label');
+        const replacement = document.createElement('div');
+        replacement.className = wrapper.className;
+        replacement.dataset.listenersAdded = 'true';
+        replacement.dataset.isLoaded = 'true';
+        replacement.appendChild(iframe);
+        wrapper.replaceWith(replacement);
       }
 
       // click anywhere inside wrapper
       wrapper.addEventListener('click', loadEmbed);
       if (overlay) overlay.addEventListener('click', loadEmbed);
       if (thumbnail) thumbnail.addEventListener('click', loadEmbed);
-
-      wrapper.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          loadEmbed();
-        }
-      });
     });
   }
 
@@ -243,6 +326,99 @@
 })();
 </script>
 {{- end }}
+
+{{- $rawVideo := .Get 0 -}}
+{{- $thumbURL := "" -}}
+{{- with .Get 1 -}}
+  {{- $thumb := . | plainify -}}
+  {{- $thumb = replaceRE "(?s)^\\[[^\\]]*\\]\\(([^)]+)\\)$" "$1" $thumb -}}
+  {{- $thumb = replaceRE "(?s).*\\(([^)]+)\\)$" "$1" $thumb -}}
+  {{- $thumbURL = $thumb | absURL | safeURL -}}
+{{- end -}}
+{{- $blankPlaceholder := printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") -}}
+{{- $playlistPlaceholder := printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/><rect x='220' y='260' width='840' height='60' fill='#fff'/><rect x='220' y='340' width='660' height='60' fill='#fff'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") -}}
+
+{{- $playlistID := "" -}}
+{{- $videoID := "" -}}
+{{- $cleanVideo := trim $rawVideo " \t\r\n" -}}
+{{- if $cleanVideo -}}
+  {{- $lowerVideo := lower $cleanVideo -}}
+  {{- $upperVideo := upper $cleanVideo -}}
+  {{- if hasPrefix $lowerVideo "http" -}}
+    {{- with urls.Parse $cleanVideo -}}
+      {{- $host := replace (lower .Host) "www." "" -}}
+      {{- $queryVals := .Query -}}
+      {{- $listParam := $queryVals.Get "list" -}}
+      {{- $videoParam := $queryVals.Get "v" -}}
+      {{- if $listParam -}}
+        {{- $playlistID = $listParam -}}
+      {{- end -}}
+      {{- if and (eq $playlistID "") $videoParam (eq (len $videoParam) 11) -}}
+        {{- $videoID = $videoParam -}}
+      {{- end -}}
+      {{- if and (eq $playlistID "") (eq $videoID "") -}}
+        {{- $path := strings.TrimPrefix .Path "/" -}}
+        {{- $segments := split $path "/" -}}
+        {{- $first := index $segments 0 | default "" -}}
+        {{- $second := index $segments 1 | default "" -}}
+        {{- if and (eq $host "youtu.be") (eq (len $first) 11) -}}
+          {{- $videoID = $first -}}
+        {{- else if and (eq $first "embed") (eq (len $second) 11) -}}
+          {{- $videoID = $second -}}
+        {{- else if and (eq $first "shorts") (eq (len $second) 11) -}}
+          {{- $videoID = $second -}}
+        {{- else if and (eq $first "playlist") $listParam -}}
+          {{- $playlistID = $listParam -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- else -}}
+    {{- if or (hasPrefix $upperVideo "PL") (hasPrefix $upperVideo "OL") (hasPrefix $upperVideo "UU") (hasPrefix $upperVideo "LL") (hasPrefix $upperVideo "FL") -}}
+      {{- $playlistID = $cleanVideo -}}
+    {{- else if eq (len $cleanVideo) 11 -}}
+      {{- $videoID = $cleanVideo -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if and (eq $playlistID "") (eq $videoID "") -}}
+    {{- if and (in $cleanVideo "list=") (not (hasPrefix $lowerVideo "http")) -}}
+      {{- $afterList := after "list=" $cleanVideo -}}
+      {{- $listCandidate := index (split $afterList "&") 0 -}}
+      {{- $playlistID = index (split $listCandidate "#") 0 -}}
+    {{- end -}}
+    {{- if and (eq $playlistID "") (in $cleanVideo "v=") -}}
+      {{- $afterV := after "v=" $cleanVideo -}}
+      {{- $candidate := index (split $afterV "&") 0 -}}
+      {{- $candidate = index (split $candidate "#") 0 -}}
+      {{- if eq (len $candidate) 11 -}}
+        {{- $videoID = $candidate -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $videoLink := $rawVideo -}}
+{{- if $rawVideo -}}
+  {{- if hasPrefix (lower $rawVideo) "http" -}}
+    {{- $videoLink = $rawVideo | safeURL -}}
+  {{- else if $playlistID -}}
+    {{- $videoLink = printf "https://www.youtube.com/playlist?list=%s" $playlistID -}}
+  {{- else if $videoID -}}
+    {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $videoID -}}
+  {{- else -}}
+    {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $rawVideo -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $fallbackThumb := $thumbURL -}}
+{{- if eq $fallbackThumb "" -}}
+  {{- if $playlistID -}}
+    {{- $fallbackThumb = printf "data:image/svg+xml;charset=utf-8,%s" $playlistPlaceholder -}}
+  {{- else if $videoID -}}
+    {{- $fallbackThumb = printf "https://img.youtube.com/vi/%s/maxresdefault.jpg" $videoID -}}
+  {{- else -}}
+    {{- $fallbackThumb = printf "data:image/svg+xml;charset=utf-8,%s" $blankPlaceholder -}}
+  {{- end -}}
+{{- end -}}
 
 {{- $videoTitle := "" -}}
 {{- with .Get "title" -}}
@@ -256,17 +432,17 @@
   {{- $ariaLabel = printf "Play video: %s" $videoTitle -}}
 {{- end -}}
 
-<div class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
-  role="button"
-  tabindex="0"
+<button type="button" class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
   aria-label="{{ $ariaLabel }}"
-  data-video-id="{{ .Get 0 }}"
-  data-thumb="{{ with .Get 1 }}{{- $thumb := . | plainify -}}{{- $thumb = replaceRE "(?s)^\\[[^\\]]*\\]\\(([^)]+)\\)$" "$1" $thumb -}}{{- $thumb = replaceRE "(?s).*\\(([^)]+)\\)$" "$1" $thumb -}}{{ $thumb | absURL | safeURL }}{{ end }}"
+  data-video-id="{{ $rawVideo }}"
+  data-thumb="{{ with $thumbURL }}{{ . }}{{ end }}"
   {{ with $videoTitle }}data-video-title="{{ . }}"{{ end }}>
   <img
     class="video-thumbnail"
-    src="data:image/svg+xml;charset=utf-8,{{ printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") }}"
-    alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
+    src="data:image/svg+xml;charset=utf-8,{{ $blankPlaceholder }}"
+    alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}"
+    loading="lazy"
+    decoding="async">
 
   {{ if and (eq .Site.Params.show_privacy_notice true) (or .Site.Params.youtube_privacy_notice_text "") }}
     <div class="video-overlay">
@@ -279,4 +455,23 @@
   {{ end }}
 
   <div class="video-play-button"></div>
-</div>
+</button>
+
+<noscript>
+  <div class="video-noscript{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}">
+    {{- if $fallbackThumb -}}
+      <img src="{{ $fallbackThumb | safeURL }}" alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
+    {{- end -}}
+    {{- if $videoLink -}}
+      <p>
+        <a href="{{ $videoLink | safeURL }}" target="_blank" rel="noopener noreferrer">
+          {{- if ne $videoTitle "" -}}
+            Open video on YouTube: {{ $videoTitle }}
+          {{- else -}}
+            Open video on YouTube
+          {{- end -}}
+        </a>
+      </p>
+    {{- end -}}
+  </div>
+</noscript>
