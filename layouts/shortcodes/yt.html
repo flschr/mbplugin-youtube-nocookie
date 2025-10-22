@@ -183,32 +183,6 @@
     let startSeconds = 0;
     const originalRaw = raw;
 
-    // Full URL handling
-    try {
-      if (raw.startsWith('http')) {
-        const u = new URL(raw);
-        const host = u.hostname.replace(/^www\./, '');
-        const list = u.searchParams.get('list');
-        const v = u.searchParams.get('v');
-        startSeconds = extractStart(u.search) || extractStart(u.hash);
-        if (list) return { type: 'playlist', id: list, start: startSeconds };
-        if (v && idPattern.test(v)) return { type: 'video', id: v, start: startSeconds };
-
-        const segments = u.pathname.split('/').filter(Boolean);
-        const first = segments[0] || '';
-        const second = segments[1] || '';
-        if (host === 'youtu.be' && idPattern.test(first)) {
-          return { type: 'video', id: first, start: startSeconds || extractStart(u.search) };
-        }
-        if (first === 'embed' && idPattern.test(second)) {
-          return { type: 'video', id: second, start: startSeconds };
-        }
-        if (first === 'shorts' && idPattern.test(second)) {
-          return { type: 'video', id: second, start: startSeconds };
-        }
-      }
-    } catch(e) { /* ignore */ }
-
     let normalized = originalRaw;
     const queryIndex = normalized.indexOf('?');
     if (queryIndex !== -1) {
@@ -290,12 +264,8 @@
             src += `&start=${Math.max(0, kind.start | 0)}`;
           }
         } else {
-          if (/^https?:\/\//i.test(raw)) {
-            const joiner = raw.includes('?') ? '&' : '?';
-            src = `${raw}${joiner}autoplay=1&mute=1`;
-          } else {
-            src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(raw)}?autoplay=1&mute=1`;
-          }
+          console.warn('YouTube nocookie shortcode: unable to determine video or playlist ID.');
+          return;
         }
         const iframe = document.createElement('iframe');
         iframe.setAttribute('allowfullscreen','');
@@ -344,40 +314,10 @@
 {{- if $cleanVideo -}}
   {{- $lowerVideo := lower $cleanVideo -}}
   {{- $upperVideo := upper $cleanVideo -}}
-  {{- if hasPrefix $lowerVideo "http" -}}
-    {{- with urls.Parse $cleanVideo -}}
-      {{- $host := replace (lower .Host) "www." "" -}}
-      {{- $queryVals := .Query -}}
-      {{- $listParam := $queryVals.Get "list" -}}
-      {{- $videoParam := $queryVals.Get "v" -}}
-      {{- if $listParam -}}
-        {{- $playlistID = $listParam -}}
-      {{- end -}}
-      {{- if and (eq $playlistID "") $videoParam (eq (len $videoParam) 11) -}}
-        {{- $videoID = $videoParam -}}
-      {{- end -}}
-      {{- if and (eq $playlistID "") (eq $videoID "") -}}
-        {{- $path := strings.TrimPrefix .Path "/" -}}
-        {{- $segments := split $path "/" -}}
-        {{- $first := index $segments 0 | default "" -}}
-        {{- $second := index $segments 1 | default "" -}}
-        {{- if and (eq $host "youtu.be") (eq (len $first) 11) -}}
-          {{- $videoID = $first -}}
-        {{- else if and (eq $first "embed") (eq (len $second) 11) -}}
-          {{- $videoID = $second -}}
-        {{- else if and (eq $first "shorts") (eq (len $second) 11) -}}
-          {{- $videoID = $second -}}
-        {{- else if and (eq $first "playlist") $listParam -}}
-          {{- $playlistID = $listParam -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-  {{- else -}}
-    {{- if or (hasPrefix $upperVideo "PL") (hasPrefix $upperVideo "OL") (hasPrefix $upperVideo "UU") (hasPrefix $upperVideo "LL") (hasPrefix $upperVideo "FL") -}}
-      {{- $playlistID = $cleanVideo -}}
-    {{- else if eq (len $cleanVideo) 11 -}}
-      {{- $videoID = $cleanVideo -}}
-    {{- end -}}
+  {{- if or (hasPrefix $upperVideo "PL") (hasPrefix $upperVideo "OL") (hasPrefix $upperVideo "UU") (hasPrefix $upperVideo "LL") (hasPrefix $upperVideo "FL") -}}
+    {{- $playlistID = $cleanVideo -}}
+  {{- else if eq (len $cleanVideo) 11 -}}
+    {{- $videoID = $cleanVideo -}}
   {{- end -}}
   {{- if and (eq $playlistID "") (eq $videoID "") -}}
     {{- if and (in $cleanVideo "list=") (not (hasPrefix $lowerVideo "http")) -}}
@@ -402,17 +342,11 @@
   {{- end -}}
 {{- end -}}
 
-{{- $videoLink := $rawVideo -}}
-{{- if $rawVideo -}}
-  {{- if hasPrefix (lower $rawVideo) "http" -}}
-    {{- $videoLink = $rawVideo | safeURL -}}
-  {{- else if $playlistID -}}
-    {{- $videoLink = printf "https://www.youtube.com/playlist?list=%s" $playlistID -}}
-  {{- else if $videoID -}}
-    {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $videoID -}}
-  {{- else -}}
-    {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $rawVideo -}}
-  {{- end -}}
+{{- $videoLink := "" -}}
+{{- if $playlistID -}}
+  {{- $videoLink = printf "https://www.youtube.com/playlist?list=%s" $playlistID -}}
+{{- else if $videoID -}}
+  {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $videoID -}}
 {{- end -}}
 
 {{- $fallbackThumb := $thumbURL -}}
