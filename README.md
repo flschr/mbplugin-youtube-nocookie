@@ -16,6 +16,7 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 - Optional and customizable **privacy notice as overlay**
 - Fully responsive design
 - No external JavaScript required
+- Renders embeddable videos directly in RSS, Atom, and JSON feeds while keeping a fallback link for feed readers that strip iframes
 
 ## 📦 Installation
 Go to the **Micro.blog plugin directory** and install the plugin from there.
@@ -48,6 +49,9 @@ All settings can be configured in the Micro.blog plugin settings panel.
 - [embedresponsively.com](http://embedresponsively.com)
 
 ## Changelog
+
+### 1.3.6
+- Render YouTube iframes in RSS/Atom/JSON feeds with a fallback link.
 
 ### 1.3.5
 - Remove support for embedding full YouTube URLs to avoid instability when rendering with Hugo.

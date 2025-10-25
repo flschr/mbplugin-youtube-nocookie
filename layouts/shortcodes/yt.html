@@ -1,10 +1,18 @@
 {{- $includeAssets := true -}}
+{{- $outputFormat := "" -}}
 {{- with .Page -}}
   {{- if .Scratch.Get "yt-nocookie-assets" -}}
     {{- $includeAssets = false -}}
   {{- else -}}
     {{- .Scratch.Set "yt-nocookie-assets" true -}}
   {{- end -}}
+  {{- with .OutputFormat -}}
+    {{- $outputFormat = .Name | default "" -}}
+  {{- end -}}
+{{- end -}}
+{{- $isFeed := in (slice "RSS" "Atom" "JSON") $outputFormat -}}
+{{- if $isFeed -}}
+  {{- $includeAssets = false -}}
 {{- end -}}
 
 {{- if $includeAssets }}
@@ -372,46 +380,80 @@
   {{- $ariaLabel = printf "Play video: %s" $videoTitle -}}
 {{- end -}}
 
-<button type="button" class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
-  aria-label="{{ $ariaLabel }}"
-  data-video-id="{{ $rawVideo }}"
-  data-thumb="{{ with $thumbURL }}{{ . }}{{ end }}"
-  {{ with $videoTitle }}data-video-title="{{ . }}"{{ end }}>
-  <img
-    class="video-thumbnail"
-    src="data:image/svg+xml;charset=utf-8,{{ $blankPlaceholder }}"
-    alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}"
-    loading="lazy"
-    decoding="async">
+{{- $iframeSrc := "" -}}
+{{- if $videoID -}}
+  {{- $iframeSrc = printf "https://www.youtube-nocookie.com/embed/%s?rel=0" $videoID -}}
+{{- else if $playlistID -}}
+  {{- $iframeSrc = printf "https://www.youtube-nocookie.com/embed/videoseries?list=%s" $playlistID -}}
+{{- end -}}
+{{- $iframeTitle := cond (ne $videoTitle "") $videoTitle (cond (ne $playlistID "") "YouTube playlist" "YouTube video") -}}
 
-  {{ if and (eq .Site.Params.show_privacy_notice true) (or .Site.Params.youtube_privacy_notice_text "") }}
-    <div class="video-overlay">
-      {{ with .Site.Params.youtube_privacy_notice_text }}
-        {{ . }}
-      {{ else }}
-        Click to load video from YouTube. Personal data may be transferred.
-      {{ end }}
+{{- if $isFeed -}}
+  {{- if $iframeSrc -}}
+    <iframe
+      src="{{ $iframeSrc | safeURL }}"
+      width="560"
+      height="315"
+      title="{{ $iframeTitle }}"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      loading="lazy"></iframe>
+  {{- end -}}
+  {{- if $videoLink -}}
+    <p>
+      <a href="{{ $videoLink | safeURL }}">
+        {{- if ne $videoTitle "" -}}
+          Open video on YouTube: {{ $videoTitle }}
+        {{- else if $playlistID -}}
+          Open playlist on YouTube
+        {{- else -}}
+          Open video on YouTube
+        {{- end -}}
+      </a>
+    </p>
+  {{- end -}}
+{{- else -}}
+  <button type="button" class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
+    aria-label="{{ $ariaLabel }}"
+    data-video-id="{{ $rawVideo }}"
+    data-thumb="{{ with $thumbURL }}{{ . }}{{ end }}"
+    {{ with $videoTitle }}data-video-title="{{ . }}"{{ end }}>
+    <img
+      class="video-thumbnail"
+      src="data:image/svg+xml;charset=utf-8,{{ $blankPlaceholder }}"
+      alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}"
+      loading="lazy"
+      decoding="async">
+
+    {{ if and (eq .Site.Params.show_privacy_notice true) (or .Site.Params.youtube_privacy_notice_text "") }}
+      <div class="video-overlay">
+        {{ with .Site.Params.youtube_privacy_notice_text }}
+          {{ . }}
+        {{ else }}
+          Click to load video from YouTube. Personal data may be transferred.
+        {{ end }}
+      </div>
+    {{ end }}
+
+    <div class="video-play-button"></div>
+  </button>
+
+  <noscript>
+    <div class="video-noscript{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}">
+      {{- if $fallbackThumb -}}
+        <img src="{{ $fallbackThumb | safeURL }}" alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
+      {{- end -}}
+      {{- if $videoLink -}}
+        <p>
+          <a href="{{ $videoLink | safeURL }}" target="_blank" rel="noopener noreferrer">
+            {{- if ne $videoTitle "" -}}
+              Open video on YouTube: {{ $videoTitle }}
+            {{- else -}}
+              Open video on YouTube
+            {{- end -}}
+          </a>
+        </p>
+      {{- end -}}
     </div>
-  {{ end }}
-
-  <div class="video-play-button"></div>
-</button>
-
-<noscript>
-  <div class="video-noscript{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}">
-    {{- if $fallbackThumb -}}
-      <img src="{{ $fallbackThumb | safeURL }}" alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
-    {{- end -}}
-    {{- if $videoLink -}}
-      <p>
-        <a href="{{ $videoLink | safeURL }}" target="_blank" rel="noopener noreferrer">
-          {{- if ne $videoTitle "" -}}
-            Open video on YouTube: {{ $videoTitle }}
-          {{- else -}}
-            Open video on YouTube
-          {{- end -}}
-        </a>
-      </p>
-    {{- end -}}
-  </div>
-</noscript>
+  </noscript>
+{{- end -}}

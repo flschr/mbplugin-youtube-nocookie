@@ -1,5 +1,5 @@
 {
-  "version": "1.3.5",
+  "version": "1.3.6",
   "title": "YouTube No-Cookie Embed",
   "description": "Embeds YouTube videos using youtube-nocookie.com with a privacy-friendly click-to-play overlay and optional privacy message.",
   "fields": [
