@@ -1,16 +1,5 @@
 {{- $includeAssets := true -}}
 {{- $isFeed := false -}}
-{{- with .OutputFormat -}}
-  {{- $formatName := lower .Name -}}
-  {{- if in (slice "rss" "atom" "json" "jsonfeed") $formatName -}}
-    {{- $isFeed = true -}}
-  {{- else if .MediaType -}}
-    {{- $mediaType := lower .MediaType.Type -}}
-    {{- if or (strings.Contains $mediaType "rss") (strings.Contains $mediaType "atom") (strings.Contains $mediaType "json") (strings.HasSuffix $mediaType "xml") -}}
-      {{- $isFeed = true -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
 {{- with .Page -}}
   {{- if .Scratch.Get "yt-nocookie-assets" -}}
     {{- $includeAssets = false -}}
