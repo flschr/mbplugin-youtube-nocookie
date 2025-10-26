@@ -1,16 +1,24 @@
 {{- $includeAssets := true -}}
-{{- $outputFormat := "" -}}
+{{- $isFeed := false -}}
 {{- with .Page -}}
   {{- if .Scratch.Get "yt-nocookie-assets" -}}
     {{- $includeAssets = false -}}
   {{- else -}}
     {{- .Scratch.Set "yt-nocookie-assets" true -}}
   {{- end -}}
-  {{- with .OutputFormat -}}
-    {{- $outputFormat = .Name | default "" -}}
+  {{- $permalink := "" -}}
+  {{- with .RelPermalink -}}
+    {{- $permalink = . -}}
+  {{- end -}}
+  {{- if eq $permalink "" -}}
+    {{- with .Permalink -}}
+      {{- $permalink = . -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if or (hasSuffix $permalink ".xml") (hasSuffix $permalink ".json") -}}
+    {{- $isFeed = true -}}
   {{- end -}}
 {{- end -}}
-{{- $isFeed := in (slice "RSS" "Atom" "JSON") $outputFormat -}}
 {{- if $isFeed -}}
   {{- $includeAssets = false -}}
 {{- end -}}
