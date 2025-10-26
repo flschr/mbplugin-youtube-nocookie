@@ -15,7 +15,8 @@
       {{- $permalink = . -}}
     {{- end -}}
   {{- end -}}
-  {{- if or (hasSuffix $permalink ".xml") (hasSuffix $permalink ".json") -}}
+  {{- $permalinkLower := lower $permalink -}}
+  {{- if or (strings.HasSuffix $permalinkLower ".xml") (strings.HasSuffix $permalinkLower ".json") -}}
     {{- $isFeed = true -}}
   {{- end -}}
 {{- end -}}
