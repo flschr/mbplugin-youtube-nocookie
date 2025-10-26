@@ -1,17 +1,17 @@
 {{- $includeAssets := true -}}
 {{- $isFeed := false -}}
-{{- with .Page -}}
-  {{- with .OutputFormat -}}
-    {{- $formatName := lower .Name -}}
-    {{- if in (slice "rss" "atom" "json" "jsonfeed") $formatName -}}
+{{- with .OutputFormat -}}
+  {{- $formatName := lower .Name -}}
+  {{- if in (slice "rss" "atom" "json" "jsonfeed") $formatName -}}
+    {{- $isFeed = true -}}
+  {{- else if .MediaType -}}
+    {{- $mediaType := lower .MediaType.Type -}}
+    {{- if or (strings.Contains $mediaType "rss") (strings.Contains $mediaType "atom") (strings.Contains $mediaType "json") (strings.HasSuffix $mediaType "xml") -}}
       {{- $isFeed = true -}}
-    {{- else if .MediaType -}}
-      {{- $mediaType := lower .MediaType.Type -}}
-      {{- if or (strings.Contains $mediaType "rss") (strings.Contains $mediaType "atom") (strings.Contains $mediaType "json") (strings.HasSuffix $mediaType "xml") -}}
-        {{- $isFeed = true -}}
-      {{- end -}}
     {{- end -}}
   {{- end -}}
+{{- end -}}
+{{- with .Page -}}
   {{- if .Scratch.Get "yt-nocookie-assets" -}}
     {{- $includeAssets = false -}}
   {{- else -}}
@@ -26,9 +26,11 @@
       {{- $permalink = . -}}
     {{- end -}}
   {{- end -}}
-  {{- $permalinkLower := lower $permalink -}}
-  {{- if or (strings.HasSuffix $permalinkLower ".xml") (strings.HasSuffix $permalinkLower ".json") -}}
-    {{- $isFeed = true -}}
+  {{- if not $isFeed -}}
+    {{- $permalinkLower := lower $permalink -}}
+    {{- if or (strings.HasSuffix $permalinkLower ".xml") (strings.HasSuffix $permalinkLower ".json") -}}
+      {{- $isFeed = true -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- if $isFeed -}}
