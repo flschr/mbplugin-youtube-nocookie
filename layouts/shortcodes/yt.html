@@ -28,17 +28,45 @@
 
 {{- if $includeAssets }}
 <style>
+:root {
+  /* Aspect Ratios */
+  --yt-aspect-ratio-16-9: 56.25%;
+
+  /* Colors */
+  --yt-bg-black: #000;
+  --yt-play-button-bg: rgba(255, 0, 0, 0.8);
+  --yt-play-button-bg-hover: rgba(255, 0, 0, 1);
+  --yt-play-button-icon: #fff;
+  --yt-overlay-bg: rgba(0, 0, 0, 0.85);
+  --yt-overlay-text: #fff;
+  --yt-focus-outline: #e53935;
+
+  /* Dimensions */
+  --yt-play-button-width: 68px;
+  --yt-play-button-height: 48px;
+  --yt-play-button-border-radius: 12px;
+  --yt-thumbnail-border-radius: 10px;
+
+  /* Spacing */
+  --yt-focus-outline-width: 3px;
+  --yt-focus-outline-offset: 4px;
+
+  /* Transitions */
+  --yt-transition-duration: 0.2s;
+  --yt-transition-timing: ease-in-out;
+}
+
 .video-wrapper {
   position: relative;
   display: block;
   width: 100%;
   padding: 0;
-  padding-bottom: 56.25%;
+  padding-bottom: var(--yt-aspect-ratio-16-9);
   margin: 0;
   height: 0;
   max-width: 100%;
   overflow: hidden;
-  background-color: #000;
+  background-color: var(--yt-bg-black);
   cursor: pointer;
   outline: none;
   border: none;
@@ -54,12 +82,12 @@
 }
 
 .video-wrapper:focus-visible {
-  outline: 3px solid #e53935;
-  outline-offset: 4px;
+  outline: var(--yt-focus-outline-width) solid var(--yt-focus-outline);
+  outline-offset: var(--yt-focus-outline-offset);
 }
 
 .video-wrapper.rounded-corners {
-  border-radius: 10px;
+  border-radius: var(--yt-thumbnail-border-radius);
 }
 
 .video-thumbnail {
@@ -75,8 +103,13 @@
   height: auto;
   object-fit: contain;
   object-position: center;
-  background-color: #000;
+  background-color: var(--yt-bg-black);
   z-index: 1;
+  transition: opacity var(--yt-transition-duration) var(--yt-transition-timing);
+}
+
+.video-wrapper:hover .video-thumbnail {
+  opacity: 0.9;
 }
 
 .video-overlay {
@@ -84,8 +117,8 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  color: white;
+  background: var(--yt-overlay-bg);
+  color: var(--yt-overlay-text);
   text-align: center;
   font-size: 0.85em;
   padding: 0.5em 1em;
@@ -94,7 +127,7 @@
 }
 
 .video-wrapper.rounded-corners .video-overlay {
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 var(--yt-thumbnail-border-radius) var(--yt-thumbnail-border-radius);
 }
 
 .video-play-button {
@@ -102,12 +135,22 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 68px;
-  height: 48px;
-  background-color: rgba(255, 0, 0, 0.8);
-  border-radius: 12px;
+  width: var(--yt-play-button-width);
+  height: var(--yt-play-button-height);
+  background-color: var(--yt-play-button-bg);
+  border-radius: var(--yt-play-button-border-radius);
   z-index: 3;
   pointer-events: none;
+  transition: all var(--yt-transition-duration) var(--yt-transition-timing);
+}
+
+.video-wrapper:hover .video-play-button {
+  background-color: var(--yt-play-button-bg-hover);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.video-wrapper:active .video-play-button {
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
 .video-play-button::before {
@@ -117,7 +160,7 @@
   top: 14px;
   width: 0;
   height: 0;
-  border-left: 18px solid white;
+  border-left: 18px solid var(--yt-play-button-icon);
   border-top: 12px solid transparent;
   border-bottom: 12px solid transparent;
 }
@@ -135,7 +178,7 @@
 .video-noscript {
   display: block;
   max-width: 100%;
-  background-color: #000;
+  background-color: var(--yt-bg-black);
   color: inherit;
   text-align: center;
   padding: 0;
@@ -143,7 +186,7 @@
 }
 
 .video-noscript.rounded-corners {
-  border-radius: 10px;
+  border-radius: var(--yt-thumbnail-border-radius);
   overflow: hidden;
 }
 
@@ -305,6 +348,14 @@
       wrapper.addEventListener('click', loadEmbed);
       if (overlay) overlay.addEventListener('click', loadEmbed);
       if (thumbnail) thumbnail.addEventListener('click', loadEmbed);
+
+      // keyboard support (Enter and Space)
+      wrapper.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          loadEmbed();
+        }
+      });
     });
   }
 
