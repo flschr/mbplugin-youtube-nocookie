@@ -38,7 +38,6 @@ This plugin offers the following optional settings:
 - Custom CSS Class – Adds a custom class to the video container for styling
 - Privacy notice on/off – Decide whether you want to show the privacy disclaimer
 - Privacy notice text – Allows you to customize the disclaimer text
-- Rounded thumbnail corners – Display video previews with rounded edges
 
 All settings can be configured in the Micro.blog plugin settings panel.
 
@@ -49,6 +48,12 @@ All settings can be configured in the Micro.blog plugin settings panel.
 - [embedresponsively.com](http://embedresponsively.com)
 
 ## Changelog
+
+### 1.3.8
+- Remove custom border-radius styling to use theme defaults instead
+
+### 1.3.7
+- Improve plugin robustness, maintainability, and security
 
 ### 1.3.6
 - Render YouTube iframes in RSS/Atom/JSON feeds with a fallback link.
