@@ -206,159 +206,328 @@
 
 <script>
 (function(){
-  function parseId(raw) {
-    if (!raw) return { type: 'unknown' };
-    raw = raw.trim();
-    const idPattern = /^[a-zA-Z0-9_-]{11}$/;
+  'use strict';
 
-    function parseStartValue(value) {
-      if (!value) return 0;
-      if (/^\d+$/.test(value)) return parseInt(value, 10);
-      let total = 0;
-      let matched = false;
-      const regex = /(\d+)(h|m|s)/gi;
-      let m;
-      while ((m = regex.exec(value)) !== null) {
-        matched = true;
-        const num = parseInt(m[1], 10);
-        switch (m[2].toLowerCase()) {
-          case 'h':
-            total += num * 3600;
-            break;
-          case 'm':
-            total += num * 60;
-            break;
-          case 's':
-            total += num;
-            break;
-        }
-      }
-      return matched ? total : 0;
+  // Constants
+  const CONSTANTS = {
+    VIDEO_ID_LENGTH: 11,
+    MAX_INPUT_LENGTH: 2048,
+    VIDEO_ID_PATTERN: /^[a-zA-Z0-9_-]{11}$/,
+    PLAYLIST_PREFIXES: /^(PL|OL|UU|LL|FL)/i,
+    ALLOWED_URL_CHARS: /^[a-zA-Z0-9_\-?=&#:/.]+$/,
+    TIME_FORMATS: {
+      HOURS: 3600,
+      MINUTES: 60,
+      SECONDS: 1
+    },
+    YOUTUBE_NOCOOKIE_DOMAIN: 'https://www.youtube-nocookie.com',
+    YOUTUBE_IMG_DOMAIN: 'https://img.youtube.com',
+    EMBED_PARAMS: 'autoplay=1&mute=1'
+  };
+
+  /**
+   * Validates input string for security
+   * @param {string} input - Input string to validate
+   * @param {number} maxLength - Maximum allowed length
+   * @returns {string} Sanitized input or empty string if invalid
+   */
+  function validateInput(input, maxLength = CONSTANTS.MAX_INPUT_LENGTH) {
+    if (!input || typeof input !== 'string') return '';
+
+    const trimmed = input.trim();
+
+    if (trimmed.length > maxLength) {
+      console.warn(`Input exceeds maximum length of ${maxLength}`);
+      return '';
     }
 
-    function extractStart(searchLike) {
-      if (!searchLike) return 0;
-      const params = new URLSearchParams(searchLike.startsWith('?') || searchLike.startsWith('#') ? searchLike.slice(1) : searchLike);
-      return parseStartValue(params.get('start')) || parseStartValue(params.get('t')) || parseStartValue(params.get('time_continue'));
+    // Basic sanitization - allow only safe characters
+    if (!CONSTANTS.ALLOWED_URL_CHARS.test(trimmed)) {
+      console.warn('Input contains invalid characters');
+      return '';
+    }
+
+    return trimmed;
+  }
+
+  /**
+   * Parses time value from various formats (123, 1h2m3s, etc.)
+   * @param {string} value - Time value to parse
+   * @returns {number} Time in seconds
+   */
+  function parseStartValue(value) {
+    if (!value) return 0;
+
+    // Simple numeric value
+    if (/^\d+$/.test(value)) {
+      const parsed = parseInt(value, 10);
+      return isNaN(parsed) ? 0 : Math.max(0, parsed);
+    }
+
+    // Parse h/m/s format
+    let total = 0;
+    let matched = false;
+    const regex = /(\d+)(h|m|s)/gi;
+    let match;
+
+    while ((match = regex.exec(value)) !== null) {
+      matched = true;
+      const num = parseInt(match[1], 10);
+      if (isNaN(num)) continue;
+
+      const unit = match[2].toLowerCase();
+      if (unit === 'h') total += num * CONSTANTS.TIME_FORMATS.HOURS;
+      else if (unit === 'm') total += num * CONSTANTS.TIME_FORMATS.MINUTES;
+      else if (unit === 's') total += num * CONSTANTS.TIME_FORMATS.SECONDS;
+    }
+
+    return matched ? Math.max(0, total) : 0;
+  }
+
+  /**
+   * Extracts start time from URL parameters
+   * @param {string} queryString - Query or hash string
+   * @returns {number} Start time in seconds
+   */
+  function extractStartTime(queryString) {
+    if (!queryString) return 0;
+
+    try {
+      const cleanQuery = queryString.startsWith('?') || queryString.startsWith('#')
+        ? queryString.slice(1)
+        : queryString;
+
+      const params = new URLSearchParams(cleanQuery);
+
+      // Check common time parameters
+      return parseStartValue(params.get('start')) ||
+             parseStartValue(params.get('t')) ||
+             parseStartValue(params.get('time_continue')) ||
+             0;
+    } catch (e) {
+      console.warn('Failed to parse query parameters:', e);
+      return 0;
+    }
+  }
+
+  /**
+   * Parses video/playlist ID from various input formats
+   * @param {string} raw - Raw input string
+   * @returns {Object} Parsed result with type, id, and start time
+   */
+  function parseId(raw) {
+    const validated = validateInput(raw);
+    if (!validated) {
+      return { type: 'unknown', id: '', start: 0 };
     }
 
     let startSeconds = 0;
-    const originalRaw = raw;
+    let normalized = validated;
 
-    let normalized = originalRaw;
+    // Extract and remove query parameters
     const queryIndex = normalized.indexOf('?');
     if (queryIndex !== -1) {
-      startSeconds = startSeconds || extractStart(normalized.slice(queryIndex + 1));
+      startSeconds = extractStartTime(normalized.slice(queryIndex + 1));
       normalized = normalized.slice(0, queryIndex);
     }
+
+    // Extract and remove hash parameters
     const hashIndex = normalized.indexOf('#');
     if (hashIndex !== -1) {
-      startSeconds = startSeconds || extractStart(normalized.slice(hashIndex + 1));
+      startSeconds = startSeconds || extractStartTime(normalized.slice(hashIndex + 1));
       normalized = normalized.slice(0, hashIndex);
     }
 
-    // Playlist-like IDs
-    if (/^(PL|OL|UU|LL|FL)/i.test(normalized)) return { type: 'playlist', id: normalized, start: startSeconds };
-    // Plain 11-char video ID
-    if (idPattern.test(normalized)) return { type: 'video', id: normalized, start: startSeconds };
+    // Check for playlist prefixes
+    if (CONSTANTS.PLAYLIST_PREFIXES.test(normalized)) {
+      return { type: 'playlist', id: normalized, start: startSeconds };
+    }
 
-    // Fallback: extract list=...
-    const m = normalized.match(/list=([^&]+)/);
-    if (m) return { type: 'playlist', id: m[1], start: startSeconds };
+    // Check for plain 11-character video ID
+    if (CONSTANTS.VIDEO_ID_PATTERN.test(normalized)) {
+      return { type: 'video', id: normalized, start: startSeconds };
+    }
 
-    return { type: 'unknown', start: startSeconds };
+    // Try to extract playlist ID from list= parameter
+    const listMatch = normalized.match(/list=([^&]+)/);
+    if (listMatch && listMatch[1]) {
+      return { type: 'playlist', id: listMatch[1], start: startSeconds };
+    }
+
+    console.warn('Unable to parse video/playlist ID:', raw);
+    return { type: 'unknown', id: '', start: startSeconds };
   }
 
+  /**
+   * Validates and sanitizes custom thumbnail URL
+   * @param {string} thumbUrl - Custom thumbnail URL
+   * @returns {string} Safe URL or empty string
+   */
+  function validateThumbnailUrl(thumbUrl) {
+    if (!thumbUrl) return '';
+
+    let cleaned = thumbUrl.trim();
+
+    // Extract URL from markdown syntax
+    const markdownMatch = cleaned.match(/^\[[^\]]*\]\(([^)]+)\)$/);
+    if (markdownMatch) {
+      cleaned = markdownMatch[1].trim();
+    }
+
+    // Validate URL format
+    try {
+      const url = new URL(cleaned, document.baseURI);
+
+      // Only allow http/https protocols
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        console.warn('Thumbnail URL must use http or https protocol');
+        return '';
+      }
+
+      return url.href;
+    } catch (e) {
+      console.warn('Invalid thumbnail URL:', e);
+      return '';
+    }
+  }
+
+  /**
+   * Generates SVG placeholder for playlists
+   * @returns {string} Data URI for SVG
+   */
+  function getPlaylistPlaceholder() {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'>` +
+                `<rect width='100%' height='100%' fill='#000'/>` +
+                `<rect x='220' y='260' width='840' height='60' fill='#fff'/>` +
+                `<rect x='220' y='340' width='660' height='60' fill='#fff'/>` +
+                `</svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  /**
+   * Sets up thumbnail for video wrapper
+   * @param {HTMLImageElement} thumbnail - Thumbnail element
+   * @param {Object} kind - Parsed video/playlist info
+   * @param {string} customThumb - Custom thumbnail URL
+   */
+  function setupThumbnail(thumbnail, kind, customThumb) {
+    if (!thumbnail) return;
+
+    if (customThumb) {
+      // Use custom thumbnail
+      thumbnail.onerror = null;
+      thumbnail.src = customThumb;
+    } else if (kind.type === 'playlist') {
+      // Use playlist placeholder
+      thumbnail.src = getPlaylistPlaceholder();
+    } else if (kind.type === 'video' && kind.id) {
+      // Use YouTube thumbnail with fallback
+      thumbnail.src = `${CONSTANTS.YOUTUBE_IMG_DOMAIN}/vi/${kind.id}/maxresdefault.jpg`;
+      thumbnail.onerror = () => {
+        thumbnail.onerror = null;
+        thumbnail.src = `${CONSTANTS.YOUTUBE_IMG_DOMAIN}/vi/${kind.id}/0.jpg`;
+      };
+    }
+    // For unknown type, keep the default placeholder
+  }
+
+  /**
+   * Creates embed URL for video or playlist
+   * @param {Object} kind - Parsed video/playlist info
+   * @returns {string} Embed URL or empty string if invalid
+   */
+  function createEmbedUrl(kind) {
+    if (kind.type === 'playlist' && kind.id) {
+      return `${CONSTANTS.YOUTUBE_NOCOOKIE_DOMAIN}/embed/videoseries?list=${encodeURIComponent(kind.id)}&${CONSTANTS.EMBED_PARAMS}`;
+    } else if (kind.type === 'video' && kind.id) {
+      let url = `${CONSTANTS.YOUTUBE_NOCOOKIE_DOMAIN}/embed/${encodeURIComponent(kind.id)}?${CONSTANTS.EMBED_PARAMS}`;
+      if (kind.start > 0) {
+        url += `&start=${Math.floor(kind.start)}`;
+      }
+      return url;
+    }
+    return '';
+  }
+
+  /**
+   * Creates and loads iframe embed
+   * @param {HTMLElement} wrapper - Video wrapper element
+   * @param {Object} kind - Parsed video/playlist info
+   * @param {string} title - Video title
+   */
+  function loadEmbed(wrapper, kind, title) {
+    if (wrapper.dataset.isLoaded === 'true') return;
+
+    const embedUrl = createEmbedUrl(kind);
+    if (!embedUrl) {
+      console.error('Unable to create embed URL - invalid video/playlist ID');
+      // Show error message to user
+      wrapper.innerHTML = '<div style="padding: 2em; text-align: center; color: #fff;">Unable to load video. Please check the video ID.</div>';
+      return;
+    }
+
+    // Create iframe
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+    iframe.setAttribute('title', title ? `YouTube video player: ${title}` : 'YouTube video player');
+    iframe.src = embedUrl;
+
+    // Replace wrapper with new container
+    const replacement = document.createElement('div');
+    replacement.className = wrapper.className;
+    replacement.dataset.listenersAdded = 'true';
+    replacement.dataset.isLoaded = 'true';
+    replacement.appendChild(iframe);
+
+    wrapper.replaceWith(replacement);
+  }
+
+  /**
+   * Enhances all video wrapper elements with interactivity
+   */
   function enhanceEmbeds() {
-    document.querySelectorAll('.video-wrapper').forEach(wrapper => {
+    const wrappers = document.querySelectorAll('.video-wrapper');
+
+    wrappers.forEach(wrapper => {
+      // Skip if already enhanced
       if (wrapper.dataset.listenersAdded === 'true') return;
       wrapper.dataset.listenersAdded = 'true';
 
-      let raw = wrapper.dataset.videoId || '';
-      if (raw.length > 2048) { console.warn('video id too long, treating as unknown'); raw=''; }
+      // Extract data attributes
+      const rawVideoId = wrapper.dataset.videoId || '';
+      const rawThumbUrl = wrapper.dataset.thumb || '';
+      const videoTitle = wrapper.dataset.videoTitle || '';
 
-      let customThumb = wrapper.dataset.thumb || '';
-      customThumb = customThumb.trim();
-      if (customThumb) {
-        const markdownMatch = customThumb.match(/^\[[^\]]*\]\(([^)]+)\)$/);
-        if (markdownMatch) {
-          customThumb = markdownMatch[1].trim();
-        }
-      }
-      let safeThumb = '';
-      if (customThumb) {
-        try {
-          safeThumb = new URL(customThumb, document.baseURI).href;
-        } catch (e) {
-          safeThumb = '';
-        }
-      }
-      const providedTitle = wrapper.dataset.videoTitle || '';
+      // Parse and validate
+      const kind = parseId(rawVideoId);
+      const safeThumb = validateThumbnailUrl(rawThumbUrl);
 
-      const kind = parseId(raw);
-      const overlay = wrapper.querySelector('.video-overlay');
+      // Setup thumbnail
       const thumbnail = wrapper.querySelector('.video-thumbnail');
+      setupThumbnail(thumbnail, kind, safeThumb);
 
-      // Thumbnails
-      if (safeThumb) {
-        thumbnail.onerror = null;
-        thumbnail.src = safeThumb;
-      } else if (kind.type === 'playlist') {
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'>`+
-                    `<rect width='100%' height='100%' fill='#000'/>`+
-                    `<rect x='220' y='260' width='840' height='60' fill='#fff'/>`+
-                    `<rect x='220' y='340' width='660' height='60' fill='#fff'/>`+
-                    `</svg>`;
-        thumbnail.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-      } else if (kind.type === 'video') {
-        thumbnail.src = `https://img.youtube.com/vi/${kind.id}/maxresdefault.jpg`;
-        thumbnail.onerror = () => { thumbnail.onerror = null; thumbnail.src = `https://img.youtube.com/vi/${kind.id}/0.jpg`; };
-      } // unknown keeps the neutral placeholder
+      // Setup click handlers
+      const loadHandler = () => loadEmbed(wrapper, kind, videoTitle);
 
-      function loadEmbed() {
-        if (wrapper.dataset.isLoaded === 'true') return;
-        let src = '';
-        if (kind.type === 'playlist') {
-          src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(kind.id)}&autoplay=1&mute=1`;
-        } else if (kind.type === 'video') {
-          src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(kind.id)}?autoplay=1&mute=1`;
-          if (kind.start) {
-            src += `&start=${Math.max(0, kind.start | 0)}`;
-          }
-        } else {
-          console.warn('YouTube nocookie shortcode: unable to determine video or playlist ID.');
-          return;
-        }
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('allowfullscreen','');
-        iframe.setAttribute('loading','lazy');
-        iframe.setAttribute('title', providedTitle ? `YouTube video player: ${providedTitle}` : 'YouTube video player');
-        iframe.src = src;
-        // clear and insert
-        wrapper.dataset.isLoaded = 'true';
-        const replacement = document.createElement('div');
-        replacement.className = wrapper.className;
-        replacement.dataset.listenersAdded = 'true';
-        replacement.dataset.isLoaded = 'true';
-        replacement.appendChild(iframe);
-        wrapper.replaceWith(replacement);
-      }
+      wrapper.addEventListener('click', loadHandler);
 
-      // click anywhere inside wrapper
-      wrapper.addEventListener('click', loadEmbed);
-      if (overlay) overlay.addEventListener('click', loadEmbed);
-      if (thumbnail) thumbnail.addEventListener('click', loadEmbed);
+      const overlay = wrapper.querySelector('.video-overlay');
+      if (overlay) overlay.addEventListener('click', loadHandler);
+      if (thumbnail) thumbnail.addEventListener('click', loadHandler);
 
-      // keyboard support (Enter and Space)
+      // Keyboard support (Enter and Space)
       wrapper.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          loadEmbed();
+          loadHandler();
         }
       });
     });
   }
 
+  // Initialize
   enhanceEmbeds();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', enhanceEmbeds);
@@ -367,30 +536,43 @@
 </script>
 {{- end }}
 
+{{- /* Extract parameters */ -}}
 {{- $rawVideo := .Get 0 -}}
 {{- $thumbURL := "" -}}
 {{- with .Get 1 -}}
   {{- $thumb := . | plainify -}}
+  {{- /* Extract URL from markdown syntax */ -}}
   {{- $thumb = replaceRE "(?s)^\\[[^\\]]*\\]\\(([^)]+)\\)$" "$1" $thumb -}}
   {{- $thumb = replaceRE "(?s).*\\(([^)]+)\\)$" "$1" $thumb -}}
   {{- $thumbURL = $thumb | absURL | safeURL -}}
 {{- end -}}
-{{- $blankPlaceholder := printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") -}}
-{{- $playlistPlaceholder := printf "%s" (replace (replace (replace (replace "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/><rect x='220' y='260' width='840' height='60' fill='#fff'/><rect x='220' y='340' width='660' height='60' fill='#fff'/></svg>" "#" "%23") "<" "%3C") ">" "%3E") "\n" "%0A") -}}
 
+{{- /* Define SVG placeholders as constants */ -}}
+{{- $blankSvg := "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/></svg>" -}}
+{{- $playlistSvg := "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='100%%' height='100%%' fill='#000'/><rect x='220' y='260' width='840' height='60' fill='#fff'/><rect x='220' y='340' width='660' height='60' fill='#fff'/></svg>" -}}
+
+{{- /* URL-encode SVG for data URIs */ -}}
+{{- $blankPlaceholder := $blankSvg | replaceRE "#" "%23" | replaceRE "<" "%3C" | replaceRE ">" "%3E" | replaceRE "\n" "%0A" -}}
+{{- $playlistPlaceholder := $playlistSvg | replaceRE "#" "%23" | replaceRE "<" "%3C" | replaceRE ">" "%3E" | replaceRE "\n" "%0A" -}}
+
+{{- /* Parse video/playlist ID from input */ -}}
 {{- $playlistID := "" -}}
 {{- $videoID := "" -}}
 {{- $cleanVideo := trim $rawVideo " \t\r\n" -}}
+
 {{- if $cleanVideo -}}
-  {{- $lowerVideo := lower $cleanVideo -}}
   {{- $upperVideo := upper $cleanVideo -}}
+
+  {{- /* Check for playlist prefixes (PL, OL, UU, LL, FL) */ -}}
   {{- if or (hasPrefix $upperVideo "PL") (hasPrefix $upperVideo "OL") (hasPrefix $upperVideo "UU") (hasPrefix $upperVideo "LL") (hasPrefix $upperVideo "FL") -}}
     {{- $playlistID = $cleanVideo -}}
+  {{- /* Check for 11-character video ID */ -}}
   {{- else if eq (len $cleanVideo) 11 -}}
     {{- $videoID = $cleanVideo -}}
-  {{- end -}}
-  {{- if and (eq $playlistID "") (eq $videoID "") -}}
-    {{- if and (in $cleanVideo "list=") (not (hasPrefix $lowerVideo "http")) -}}
+  {{- /* Try to extract from query parameters */ -}}
+  {{- else -}}
+    {{- /* Extract playlist ID from list= parameter */ -}}
+    {{- if in $cleanVideo "list=" -}}
       {{- $listParts := split $cleanVideo "list=" -}}
       {{- if ge (len $listParts) 2 -}}
         {{- $afterList := index $listParts 1 -}}
@@ -398,6 +580,8 @@
         {{- $playlistID = index (split $listCandidate "#") 0 -}}
       {{- end -}}
     {{- end -}}
+
+    {{- /* Extract video ID from v= parameter if no playlist found */ -}}
     {{- if and (eq $playlistID "") (in $cleanVideo "v=") -}}
       {{- $videoParts := split $cleanVideo "v=" -}}
       {{- if ge (len $videoParts) 2 -}}
@@ -412,6 +596,7 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* Generate YouTube link for fallback */ -}}
 {{- $videoLink := "" -}}
 {{- if $playlistID -}}
   {{- $videoLink = printf "https://www.youtube.com/playlist?list=%s" $playlistID -}}
@@ -419,6 +604,7 @@
   {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $videoID -}}
 {{- end -}}
 
+{{- /* Determine fallback thumbnail */ -}}
 {{- $fallbackThumb := $thumbURL -}}
 {{- if eq $fallbackThumb "" -}}
   {{- if $playlistID -}}
@@ -430,6 +616,7 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* Extract video title from parameters */ -}}
 {{- $videoTitle := "" -}}
 {{- with .Get "title" -}}
   {{- $videoTitle = . -}}
@@ -437,11 +624,14 @@
 {{- if and (eq $videoTitle "") (ge (len .Params) 3) -}}
   {{- $videoTitle = index .Params 2 -}}
 {{- end -}}
+
+{{- /* Generate accessibility labels */ -}}
 {{- $ariaLabel := "Play YouTube video" -}}
 {{- if ne $videoTitle "" -}}
   {{- $ariaLabel = printf "Play video: %s" $videoTitle -}}
 {{- end -}}
 
+{{- /* Generate iframe src for feed embeds */ -}}
 {{- $iframeSrc := "" -}}
 {{- if $videoID -}}
   {{- $iframeSrc = printf "https://www.youtube-nocookie.com/embed/%s?rel=0" $videoID -}}
@@ -450,7 +640,9 @@
 {{- end -}}
 {{- $iframeTitle := cond (ne $videoTitle "") $videoTitle (cond (ne $playlistID "") "YouTube playlist" "YouTube video") -}}
 
+{{- /* RSS/Atom/JSON Feed rendering */ -}}
 {{- if $isFeed -}}
+  {{- /* Render iframe directly in feeds */ -}}
   {{- if $iframeSrc -}}
     <iframe
       src="{{ $iframeSrc | safeURL }}"
@@ -461,6 +653,7 @@
       allowfullscreen
       loading="lazy"></iframe>
   {{- end -}}
+  {{- /* Fallback link for feed readers that strip iframes */ -}}
   {{- if $videoLink -}}
     <p>
       <a href="{{ $videoLink | safeURL }}">
@@ -474,12 +667,18 @@
       </a>
     </p>
   {{- end -}}
+
+{{- /* Regular page rendering with click-to-play */ -}}
 {{- else -}}
-  <button type="button" class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
+  {{- /* Interactive button wrapper for click-to-play */ -}}
+  <button type="button"
+    class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
     aria-label="{{ $ariaLabel }}"
     data-video-id="{{ $rawVideo }}"
     data-thumb="{{ with $thumbURL }}{{ . }}{{ end }}"
     {{ with $videoTitle }}data-video-title="{{ . }}"{{ end }}>
+
+    {{- /* Thumbnail image (placeholder initially, JS will set correct src) */ -}}
     <img
       class="video-thumbnail"
       src="data:image/svg+xml;charset=utf-8,{{ $blankPlaceholder }}"
@@ -487,6 +686,7 @@
       loading="lazy"
       decoding="async">
 
+    {{- /* Optional privacy notice overlay */ -}}
     {{ if and (eq .Site.Params.show_privacy_notice true) (or .Site.Params.youtube_privacy_notice_text "") }}
       <div class="video-overlay">
         {{ with .Site.Params.youtube_privacy_notice_text }}
@@ -497,13 +697,16 @@
       </div>
     {{ end }}
 
+    {{- /* Play button icon */ -}}
     <div class="video-play-button"></div>
   </button>
 
+  {{- /* Noscript fallback for users without JavaScript */ -}}
   <noscript>
     <div class="video-noscript{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}">
       {{- if $fallbackThumb -}}
-        <img src="{{ $fallbackThumb | safeURL }}" alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
+        <img src="{{ $fallbackThumb | safeURL }}"
+             alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">
       {{- end -}}
       {{- if $videoLink -}}
         <p>
