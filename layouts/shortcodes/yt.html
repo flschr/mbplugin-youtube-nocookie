@@ -45,7 +45,6 @@
   --yt-play-button-width: 68px;
   --yt-play-button-height: 48px;
   --yt-play-button-border-radius: 12px;
-  --yt-thumbnail-border-radius: 10px;
 
   /* Spacing */
   --yt-focus-outline-width: 3px;
@@ -86,10 +85,6 @@
   outline-offset: var(--yt-focus-outline-offset);
 }
 
-.video-wrapper.rounded-corners {
-  border-radius: var(--yt-thumbnail-border-radius);
-}
-
 .video-thumbnail {
   position: absolute;
   top: 0;
@@ -124,10 +119,6 @@
   padding: 0.5em 1em;
   z-index: 2;
   pointer-events: auto;
-}
-
-.video-wrapper.rounded-corners .video-overlay {
-  border-radius: 0 0 var(--yt-thumbnail-border-radius) var(--yt-thumbnail-border-radius);
 }
 
 .video-play-button {
@@ -183,11 +174,6 @@
   text-align: center;
   padding: 0;
   margin-top: 0.5em;
-}
-
-.video-noscript.rounded-corners {
-  border-radius: var(--yt-thumbnail-border-radius);
-  overflow: hidden;
 }
 
 .video-noscript img {
@@ -672,7 +658,7 @@
 {{- else -}}
   {{- /* Interactive button wrapper for click-to-play */ -}}
   <button type="button"
-    class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}"
+    class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}"
     aria-label="{{ $ariaLabel }}"
     data-video-id="{{ $rawVideo }}"
     data-thumb="{{ with $thumbURL }}{{ . }}{{ end }}"
@@ -703,7 +689,7 @@
 
   {{- /* Noscript fallback for users without JavaScript */ -}}
   <noscript>
-    <div class="video-noscript{{ if eq .Site.Params.rounded_thumbnails true }} rounded-corners{{ end }}">
+    <div class="video-noscript">
       {{- if $fallbackThumb -}}
         <img src="{{ $fallbackThumb | safeURL }}"
              alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else }}YouTube Thumbnail{{ end }}">

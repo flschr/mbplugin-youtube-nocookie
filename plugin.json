@@ -19,12 +19,6 @@
       "label": "YouTube privacy notice text",
       "type": "string",
       "default": "Click to load video from YouTube. Personal data may be transferred."
-    },
-    {
-      "field": "params.rounded_thumbnails",
-      "label": "Rounded thumbnail corners",
-      "type": "boolean",
-      "default": false
     }
   ]
 }
