@@ -599,10 +599,10 @@
 
 {{- /* Generate YouTube link for fallback */ -}}
 {{- $videoLink := "" -}}
-{{- if $playlistID -}}
-  {{- $videoLink = printf "https://www.youtube.com/playlist?list=%s" $playlistID -}}
-{{- else if $videoID -}}
+{{- if $videoID -}}
   {{- $videoLink = printf "https://www.youtube.com/watch?v=%s" $videoID -}}
+{{- else if $playlistID -}}
+  {{- $videoLink = printf "https://www.youtube.com/playlist?list=%s" $playlistID -}}
 {{- end -}}
 
 {{- /* Determine fallback thumbnail */ -}}
@@ -653,6 +653,16 @@
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen
       loading="lazy"></iframe>
+  {{- end -}}
+  {{- /* Linked thumbnail fallback for feed readers */ -}}
+  {{- if and $videoLink $fallbackThumb -}}
+    <p>
+      <a href="{{ $videoLink | safeURL }}">
+        <img
+          src="{{ $fallbackThumb | safeURL }}"
+          alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else if $playlistID }}YouTube playlist thumbnail{{ else }}YouTube video thumbnail{{ end }}">
+      </a>
+    </p>
   {{- end -}}
   {{- /* Fallback link for feed readers that strip iframes */ -}}
   {{- if $videoLink -}}
