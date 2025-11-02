@@ -1,34 +1,33 @@
 {{- $includeAssets := true -}}
 {{- $isFeed := false -}}
+
 {{- with .Page -}}
-  {{- $outputFormatName := "" -}}
-  {{- with .OutputFormat -}}
-    {{- with .Name -}}
-      {{- $outputFormatName = lower . -}}
-    {{- else -}}
-      {{- with .MediaType -}}
-        {{- with .Type -}}
-          {{- $outputFormatName = lower . -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-  {{- end -}}
+  {{- $page := . -}}
   {{- if .Scratch.Get "yt-nocookie-assets" -}}
     {{- $includeAssets = false -}}
   {{- else -}}
     {{- .Scratch.Set "yt-nocookie-assets" true -}}
   {{- end -}}
   {{- $permalink := "" -}}
+  {{- $relPermalink := "" -}}
   {{- with .RelPermalink -}}
     {{- $permalink = . -}}
+    {{- $relPermalink = . -}}
   {{- end -}}
   {{- if eq $permalink "" -}}
     {{- with .Permalink -}}
       {{- $permalink = . -}}
     {{- end -}}
   {{- end -}}
-  {{- if or (eq $outputFormatName "rss") (eq $outputFormatName "atom") (eq $outputFormatName "json") -}}
-    {{- $isFeed = true -}}
+  {{- /* Compare current permalink with known feed outputs */ -}}
+  {{- $feedFormats := slice "rss" "atom" "json" -}}
+  {{- range $feedFormats -}}
+    {{- $formatName := upper . -}}
+    {{- with $page.OutputFormats.Get $formatName -}}
+      {{- if or (and (ne $permalink "") (eq $permalink .Permalink)) (and (ne $relPermalink "") (eq $relPermalink .RelPermalink)) -}}
+        {{- $isFeed = true -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
   {{- if not $isFeed -}}
     {{- $permalinkLower := lower $permalink -}}
