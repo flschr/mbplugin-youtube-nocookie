@@ -658,11 +658,11 @@
     <p>
       <a href="{{ $videoLink | safeURL }}">
         {{- if ne $videoTitle "" -}}
-          Falls das Video nicht angezeigt wird: {{ $videoTitle }} auf YouTube öffnen
+          Click to open video: {{ $videoTitle }} on YouTube
         {{- else if $playlistID -}}
-          Falls die Playlist nicht angezeigt wird: Auf YouTube öffnen
+          Click to open playlist on YouTube
         {{- else -}}
-          Falls das Video nicht angezeigt wird: Auf YouTube öffnen
+          Click to open video on YouTube
         {{- end -}}
       </a>
     </p>
