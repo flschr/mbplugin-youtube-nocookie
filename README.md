@@ -49,6 +49,9 @@ All settings can be configured in the Micro.blog plugin settings panel.
 
 ## Changelog
 
+### 1.3.9
+- Simplify RSS feed rendering to show iframe embed with text-only fallback link (removes thumbnail image from feeds)
+
 ### 1.3.8
 - Remove custom border-radius styling to use theme defaults instead
 
