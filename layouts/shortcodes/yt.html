@@ -202,6 +202,10 @@
   color: inherit;
   text-decoration: underline;
 }
+
+.yt-text-link {
+  display: none;
+}
 </style>
 
 <script>
@@ -640,6 +644,16 @@
 {{- end -}}
 {{- $iframeTitle := cond (ne $videoTitle "") $videoTitle (cond (ne $playlistID "") "YouTube playlist" "YouTube video") -}}
 
+{{- /* Generate unified link text for RSS, Mastodon syndication, and noscript fallback */ -}}
+{{- $linkText := "" -}}
+{{- if ne $videoTitle "" -}}
+  {{- $linkText = printf "Video: %s" $videoTitle -}}
+{{- else if $playlistID -}}
+  {{- $linkText = "YouTube Playlist" -}}
+{{- else -}}
+  {{- $linkText = "YouTube Video" -}}
+{{- end -}}
+
 {{- /* RSS/Atom/JSON Feed rendering */ -}}
 {{- if $isFeed -}}
   {{- /* Render iframe directly in feeds */ -}}
@@ -656,20 +670,19 @@
   {{- /* Fallback link if iframe cannot be loaded */ -}}
   {{- if $videoLink -}}
     <p>
-      <a href="{{ $videoLink | safeURL }}">
-        {{- if ne $videoTitle "" -}}
-          Click to open video: {{ $videoTitle }} on YouTube
-        {{- else if $playlistID -}}
-          Click to open playlist on YouTube
-        {{- else -}}
-          Click to open video on YouTube
-        {{- end -}}
-      </a>
+      <a href="{{ $videoLink | safeURL }}">{{ $linkText }}</a>
     </p>
   {{- end -}}
 
 {{- /* Regular page rendering with click-to-play */ -}}
 {{- else -}}
+  {{- /* Text link for Mastodon syndication (hidden via CSS on blog, visible when CSS stripped by Mastodon) */ -}}
+  {{- if $videoLink -}}
+    <p class="yt-text-link">
+      <a href="{{ $videoLink | safeURL }}">{{ $linkText }}</a>
+    </p>
+  {{- end -}}
+
   {{- /* Interactive button wrapper for click-to-play */ -}}
   <button type="button"
     class="video-wrapper{{ with .Site.Params.youtube_video_class }} {{ . }}{{ end }}"
@@ -710,13 +723,7 @@
       {{- end -}}
       {{- if $videoLink -}}
         <p>
-          <a href="{{ $videoLink | safeURL }}" target="_blank" rel="noopener noreferrer">
-            {{- if ne $videoTitle "" -}}
-              Open video on YouTube: {{ $videoTitle }}
-            {{- else -}}
-              Open video on YouTube
-            {{- end -}}
-          </a>
+          <a href="{{ $videoLink | safeURL }}" target="_blank" rel="noopener noreferrer">{{ $linkText }}</a>
         </p>
       {{- end -}}
     </div>
