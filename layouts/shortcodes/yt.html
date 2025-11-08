@@ -653,26 +653,16 @@
       allowfullscreen
       loading="lazy"></iframe>
   {{- end -}}
-  {{- /* Linked thumbnail fallback for feed readers */ -}}
-  {{- if and $videoLink $fallbackThumb -}}
-    <p>
-      <a href="{{ $videoLink | safeURL }}">
-        <img
-          src="{{ $fallbackThumb | safeURL }}"
-          alt="{{ if ne $videoTitle "" }}Thumbnail for video: {{ $videoTitle }}{{ else if $playlistID }}YouTube playlist thumbnail{{ else }}YouTube video thumbnail{{ end }}">
-      </a>
-    </p>
-  {{- end -}}
-  {{- /* Fallback link for feed readers that strip iframes */ -}}
+  {{- /* Fallback link if iframe cannot be loaded */ -}}
   {{- if $videoLink -}}
     <p>
       <a href="{{ $videoLink | safeURL }}">
         {{- if ne $videoTitle "" -}}
-          Open video on YouTube: {{ $videoTitle }}
+          Falls das Video nicht angezeigt wird: {{ $videoTitle }} auf YouTube öffnen
         {{- else if $playlistID -}}
-          Open playlist on YouTube
+          Falls die Playlist nicht angezeigt wird: Auf YouTube öffnen
         {{- else -}}
-          Open video on YouTube
+          Falls das Video nicht angezeigt wird: Auf YouTube öffnen
         {{- end -}}
       </a>
     </p>

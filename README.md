@@ -16,7 +16,7 @@ This plugin is forked by [René Fischer](https://fischr.org) from [mbplugin-yout
 - Optional and customizable **privacy notice as overlay**
 - Fully responsive design
 - No external JavaScript required
-- Renders embeddable videos directly in RSS, Atom, and JSON feeds while keeping a fallback link for feed readers that strip iframes
+- Embeds iframes directly in RSS, Atom, and JSON feeds with a fallback link if the iframe cannot be loaded
 
 ## 📦 Installation
 Go to the **Micro.blog plugin directory** and install the plugin from there.
